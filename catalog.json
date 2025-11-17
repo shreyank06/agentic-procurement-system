@@ -1,0 +1,74 @@
+[
+  {
+    "id": "SP-100",
+    "component": "solar_panel",
+    "vendor": "Helios Dynamics",
+    "price": 4800,
+    "lead_time_days": 21,
+    "reliability": 0.985,
+    "specs": {"power_w": 150, "mass_kg": 12}
+  },
+  {
+    "id": "SP-200",
+    "component": "solar_panel",
+    "vendor": "Astra Components",
+    "price": 5200,
+    "lead_time_days": 14,
+    "reliability": 0.975,
+    "specs": {"power_w": 180, "mass_kg": 15}
+  },
+  {
+    "id": "BAT-50",
+    "component": "battery",
+    "vendor": "Helios Dynamics",
+    "price": 2200,
+    "lead_time_days": 10,
+    "reliability": 0.97,
+    "specs": {"capacity_wh": 5000, "mass_kg": 8}
+  },
+  {
+    "id": "BAT-80",
+    "component": "battery",
+    "vendor": "LunaTech Supplies",
+    "price": 3100,
+    "lead_time_days": 25,
+    "reliability": 0.99,
+    "specs": {"capacity_wh": 8000, "mass_kg": 12}
+  },
+  {
+    "id": "THR-1",
+    "component": "thruster",
+    "vendor": "Astra Components",
+    "price": 7600,
+    "lead_time_days": 45,
+    "reliability": 0.96,
+    "specs": {"thrust_n": 30, "isp_s": 320}
+  },
+  {
+    "id": "THR-2",
+    "component": "thruster",
+    "vendor": "Ionix Works",
+    "price": 9400,
+    "lead_time_days": 18,
+    "reliability": 0.98,
+    "specs": {"thrust_n": 28, "isp_s": 380}
+  },
+  {
+    "id": "CM-10",
+    "component": "comm_module",
+    "vendor": "LunaTech Supplies",
+    "price": 1300,
+    "lead_time_days": 7,
+    "reliability": 0.96,
+    "specs": {"bandwidth_mbps": 20, "mass_kg": 3}
+  },
+  {
+    "id": "CM-20",
+    "component": "comm_module",
+    "vendor": "Helios Dynamics",
+    "price": 1700,
+    "lead_time_days": 12,
+    "reliability": 0.985,
+    "specs": {"bandwidth_mbps": 50, "mass_kg": 4}
+  }
+]
