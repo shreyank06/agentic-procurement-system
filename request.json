@@ -1,0 +1,12 @@
+{
+  "component": "solar_panel",
+  "spec_filters": {"power_w": 140},
+  "max_cost": 6000,
+  "latest_delivery_days": 30,
+  "weights": {"price": 0.4, "lead_time": 0.3, "reliability": 0.3},
+  "vendor_constraints": {
+    "excluded_vendors": ["Astra Components"],
+    "min_reliability": 0.98,
+    "max_lead_time": 25
+  }
+}
