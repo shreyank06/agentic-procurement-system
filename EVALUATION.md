@@ -117,23 +117,7 @@ project/
   - `plan_procurement()` - clearly the main agent function
 
 - ✓ **Docstrings:** All functions documented
-  ```python
-  def plan_procurement(request: dict, top_k: int = 3, investigate: bool = False, llm_provider: str = "mock") -> dict:
-      """
-      Plan procurement by searching catalog, scoring candidates, and generating justification.
 
-      Args:
-          request: Request dict with component, spec_filters, max_cost, latest_delivery_days, weights
-          top_k: Number of top candidates to return
-          investigate: Whether to call investigation tools
-          llm_provider: LLM provider to use for justification
-
-      Returns:
-          Result dict with request, candidates, selected, justification, trace, metrics
-      """
-  ```
-
----
 
 ## 3. Tests Evaluation
 
