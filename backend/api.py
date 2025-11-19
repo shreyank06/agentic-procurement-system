@@ -263,19 +263,15 @@ async def run_procurement(request: ProcurementRequest):
 
 
 @app.post("/api/negotiate/start")
-async def start_negotiation(request: NegotiationRequest):
+async def start_negotiation(request: ChatRequest):
     """
     Start vendor negotiation for selected item.
 
     Returns vendor's opening position.
     """
     try:
-        # Get LLM provider from request or use mock
-        llm_provider = getattr(request, 'llm_provider', 'mock')
-        api_key = getattr(request, 'api_key', None)
-
-        # Initialize agent
-        agent = NegotiationAgent(llm_provider=llm_provider, api_key=api_key)
+        # Initialize agent with LLM provider and API key
+        agent = NegotiationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
 
         # Start negotiation
         result = agent.start_negotiation(
@@ -316,19 +312,15 @@ async def negotiate_chat(request: ChatRequest):
 
 
 @app.post("/api/cost-optimize/start")
-async def start_cost_optimization(request: NegotiationRequest):
+async def start_cost_optimization(request: ChatRequest):
     """
     Start cost optimization analysis.
 
     Returns initial cost analysis and savings recommendations.
     """
     try:
-        # Get LLM provider from request or use mock
-        llm_provider = getattr(request, 'llm_provider', 'mock')
-        api_key = getattr(request, 'api_key', None)
-
-        # Initialize agent
-        agent = CostOptimizationAgent(llm_provider=llm_provider, api_key=api_key)
+        # Initialize agent with LLM provider and API key
+        agent = CostOptimizationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
 
         # Get initial analysis
         result = agent.analyze_costs(
