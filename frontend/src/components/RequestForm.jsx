@@ -14,7 +14,8 @@ function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
     top_k: 3,
     investigate: false,
     negotiate: false,
-    llm_provider: 'mock'
+    llm_provider: 'mock',
+    api_key: ''
   })
 
   const [specKey, setSpecKey] = useState('')
@@ -84,7 +85,8 @@ function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
       top_k: 3,
       investigate: false,
       negotiate: false,
-      llm_provider: 'mock'
+      llm_provider: 'mock',
+      api_key: ''
     })
     onReset()
   }
@@ -255,8 +257,16 @@ function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
               className="input-field"
             >
               <option value="mock">Mock LLM (Offline)</option>
-              <option value="openai">OpenAI (Requires API Key)</option>
+              <option value="openai">OpenAI</option>
             </select>
+
+            {formData.llm_provider === 'openai' && (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-700">
+                  Using OpenAI API key from server environment configuration.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
