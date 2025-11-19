@@ -28,7 +28,9 @@ export default function InteractiveCostChat({ selected, request, onClose }) {
     try {
       const response = await axios.post(`${API_BASE}/api/cost-optimize/start`, {
         selected_item: selected,
-        request: request
+        request: request,
+        llm_provider: 'openai',
+        api_key: process.env.REACT_APP_OPENAI_API_KEY || ''
       })
 
       setAnalysis(response.data.estimated_savings)
@@ -57,7 +59,8 @@ export default function InteractiveCostChat({ selected, request, onClose }) {
         conversation: [...conversation, userMsg],
         selected_item: selected,
         request: request,
-        llm_provider: 'mock'
+        llm_provider: 'openai',
+        api_key: process.env.REACT_APP_OPENAI_API_KEY || ''
       })
 
       // Add agent response

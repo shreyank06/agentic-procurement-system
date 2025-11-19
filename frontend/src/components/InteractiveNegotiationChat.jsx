@@ -27,7 +27,9 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
     try {
       const response = await axios.post(`${API_BASE}/api/negotiate/start`, {
         selected_item: selected,
-        request: request
+        request: request,
+        llm_provider: 'openai',
+        api_key: process.env.REACT_APP_OPENAI_API_KEY || ''
       })
 
       setConversation(response.data.conversation)
@@ -55,7 +57,8 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
         conversation: [...conversation, userMsg],
         selected_item: selected,
         request: request,
-        llm_provider: 'mock'
+        llm_provider: 'openai',
+        api_key: process.env.REACT_APP_OPENAI_API_KEY || ''
       })
 
       // Add vendor response
