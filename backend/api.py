@@ -203,15 +203,19 @@ async def run_procurement(request: ProcurementRequest):
         if request.llm_provider.lower() == "openai" and not request.api_key:
             # Use environment variable as fallback
             api_key_to_use = os.getenv("OPENAI_API_KEY")
-            # Force output to appear in logs immediately
-            print(f"DEBUG: Checking OPENAI_API_KEY from env: {api_key_to_use is not None}", flush=True)
-            print(f"DEBUG: All env vars containing OPENAI: {[k for k in os.environ.keys() if 'OPENAI' in k]}", flush=True)
+
+            # Debug: Show what env vars exist
+            all_env_keys = sorted(list(os.environ.keys()))
+            print(f"DEBUG: Total env vars: {len(all_env_keys)}", flush=True)
+            print(f"DEBUG: Sample env vars: {all_env_keys[:10]}", flush=True)
+            print(f"DEBUG: OPENAI_API_KEY found: {api_key_to_use is not None}", flush=True)
+            print(f"DEBUG: OPENAI-related vars: {[k for k in all_env_keys if 'OPENAI' in k.upper()]}", flush=True)
             sys.stdout.flush()
+
             if not api_key_to_use:
-                print(f"DEBUG: OPENAI_API_KEY not found in environment!", flush=True)
                 raise HTTPException(
                     status_code=400,
-                    detail=f"OpenAI API key is required. Env vars found: {[k for k in os.environ.keys() if 'OPENAI' in k]}"
+                    detail=f"OpenAI API key required. Total env vars: {len(all_env_keys)}, OPENAI vars: {[k for k in all_env_keys if 'OPENAI' in k.upper()]}"
                 )
 
         # Run procurement
