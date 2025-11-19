@@ -25,6 +25,12 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
     setError(null)
 
     try {
+      console.log('Starting negotiation with:', {
+        selected_item: selected,
+        llm_provider: 'openai',
+        api_base: API_BASE
+      })
+
       const response = await axios.post(`${API_BASE}/api/negotiate/start`, {
         selected_item: selected,
         request: request,
@@ -32,9 +38,12 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
         api_key: process.env.REACT_APP_OPENAI_API_KEY || ''
       })
 
+      console.log('Negotiation response:', response.data)
       setConversation(response.data.conversation)
     } catch (err) {
-      setError(err.response?.data?.detail || err.message)
+      const errorMsg = err.response?.data?.detail || err.message || 'Unknown error'
+      console.error('Negotiation error:', errorMsg, err)
+      setError(`Error: ${errorMsg}`)
     } finally {
       setLoading(false)
     }

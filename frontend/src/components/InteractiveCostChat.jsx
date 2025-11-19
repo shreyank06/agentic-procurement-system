@@ -26,6 +26,12 @@ export default function InteractiveCostChat({ selected, request, onClose }) {
     setError(null)
 
     try {
+      console.log('Starting cost analysis with:', {
+        selected_item: selected,
+        llm_provider: 'openai',
+        api_base: API_BASE
+      })
+
       const response = await axios.post(`${API_BASE}/api/cost-optimize/start`, {
         selected_item: selected,
         request: request,
@@ -33,10 +39,13 @@ export default function InteractiveCostChat({ selected, request, onClose }) {
         api_key: process.env.REACT_APP_OPENAI_API_KEY || ''
       })
 
+      console.log('Analysis response:', response.data)
       setAnalysis(response.data.estimated_savings)
       setConversation(response.data.conversation)
     } catch (err) {
-      setError(err.response?.data?.detail || err.message)
+      const errorMsg = err.response?.data?.detail || err.message || 'Unknown error'
+      console.error('Analysis error:', errorMsg, err)
+      setError(`Error: ${errorMsg}`)
     } finally {
       setLoading(false)
     }
