@@ -108,6 +108,19 @@ async def health_check():
     return {"status": "healthy", "catalog_loaded": True}
 
 
+@app.get("/api/debug/env")
+async def debug_env():
+    """Debug endpoint to check environment variables."""
+    return {
+        "VITE_API_URL": os.getenv("VITE_API_URL", "NOT SET"),
+        "BACKEND_URL": os.getenv("BACKEND_URL", "NOT SET"),
+        "OPENAI_API_KEY": "SET" if os.getenv("OPENAI_API_KEY") else "NOT SET",
+        "PYTHON_VERSION": os.getenv("PYTHON_VERSION", "NOT SET"),
+        "catalog_loaded": catalog is not None,
+        "catalog_items": len(catalog.items) if catalog else 0
+    }
+
+
 @app.get("/api/catalog/components")
 async def get_components():
     """Get list of available component types."""
