@@ -1,5 +1,7 @@
-# Here is the content for the requirements.txt file
-
-
-numpy
-pytest
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.0.0
+python-multipart>=0.0.6
+openai>=1.0.0
+httptools>=0.6.0
+websockets>=11.0
