@@ -186,27 +186,70 @@ class MockLLM(LLMAdapter):
         return "Based on the analysis, this item provides the best value considering price, lead time, and reliability metrics."
 
 
-def select_llm_provider(llm_provider: str = "mock") -> LLMAdapter:
+class OpenAILLM(LLMAdapter):
+    """OpenAI LLM adapter using GPT models."""
+
+    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo"):
+        """Initialize OpenAI adapter with API key.
+
+        Args:
+            api_key: OpenAI API key
+            model: Model to use (default: gpt-3.5-turbo)
+        """
+        self.api_key = api_key
+        self.model = model
+
+    def generate(self, prompt: str, max_tokens: int = 150) -> str:
+        """Generate response using OpenAI API.
+
+        Args:
+            prompt: Input prompt
+            max_tokens: Maximum tokens to generate
+
+        Returns:
+            Generated text response
+        """
+        try:
+            from openai import OpenAI
+
+            client = OpenAI(api_key=self.api_key)
+
+            response = client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are a procurement expert helping to justify component selection decisions."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=max_tokens,
+                temperature=0.7
+            )
+
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            return f"OpenAI API Error: {str(e)}"
+
+
+def select_llm_provider(llm_provider: str = "mock", api_key: str = None) -> LLMAdapter:
     """
-    Function to select an LLM provider. Returns MockLLM if environment variables for real providers are not present.
+    Function to select an LLM provider.
 
     Args:
         llm_provider: Provider name ("mock", "openai", etc.)
+        api_key: Optional API key for the provider
 
     Returns:
         LLMAdapter instance
     """
     import os
 
-    # Check for real provider environment variables
-    if llm_provider.lower() == "openai" and os.getenv("OPENAI_API_KEY"):
-        # Could implement OpenAI adapter here if needed
-        # For now, fall back to mock
-        return MockLLM()
-    elif llm_provider.lower() == "anthropic" and os.getenv("ANTHROPIC_API_KEY"):
-        # Could implement Anthropic adapter here if needed
-        # For now, fall back to mock
-        return MockLLM()
+    if llm_provider.lower() == "openai":
+        # Use provided API key or check environment
+        key = api_key or os.getenv("OPENAI_API_KEY")
+        if key:
+            return OpenAILLM(api_key=key)
+        else:
+            # Return None to signal that API key is required
+            return None
     else:
         # Default to MockLLM
         return MockLLM()

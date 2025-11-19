@@ -156,7 +156,7 @@ def availability_tool(vendor: str) -> dict:
     }
 
 
-def plan_procurement(request: dict, top_k: int = 3, investigate: bool = False, llm_provider: str = "mock") -> dict:
+def plan_procurement(request: dict, top_k: int = 3, investigate: bool = False, llm_provider: str = "mock", api_key: str = None) -> dict:
     """
     Plan procurement by searching catalog, scoring candidates, and generating justification.
 
@@ -210,10 +210,27 @@ def plan_procurement(request: dict, top_k: int = 3, investigate: bool = False, l
         "result": f"found {len(candidates)} candidates"
     })
 
-    # Step 2: Check if candidates found
+    # Step 2: Apply hard constraints (max_cost, latest_delivery_days)
+    initial_count = len(candidates)
+    max_cost = request.get("max_cost")
+    latest_delivery = request.get("latest_delivery_days")
+
+    if max_cost is not None:
+        candidates = [c for c in candidates if c.get("price", float('inf')) <= max_cost]
+    if latest_delivery is not None:
+        candidates = [c for c in candidates if c.get("lead_time_days", float('inf')) <= latest_delivery]
+
+    if initial_count > len(candidates):
+        trace.append({
+            "step": "constraint_filtering",
+            "input": {"max_cost": max_cost, "latest_delivery_days": latest_delivery},
+            "result": f"filtered from {initial_count} to {len(candidates)} candidates"
+        })
+
+    # Step 3: Check if candidates found
     if not candidates:
         metrics["total_latency"] = time.time() - start_time
-        return {"error": "no candidates", "status": 404, "trace": trace, "metrics": metrics}
+        return {"error": "no candidates match constraints", "status": 404, "trace": trace, "metrics": metrics}
 
     # Step 3: Compute min/max for normalization
     step_start = time.time()
@@ -298,7 +315,17 @@ def plan_procurement(request: dict, top_k: int = 3, investigate: bool = False, l
 
     # Step 8: Generate justification using LLM
     step_start = time.time()
-    llm = select_llm_provider(llm_provider)
+    llm = select_llm_provider(llm_provider, api_key=api_key)
+
+    # Check if LLM provider returned None (API key required)
+    if llm is None:
+        metrics["total_latency"] = time.time() - start_time
+        return {
+            "error": f"API key required for {llm_provider}. Please provide an API key.",
+            "status": 400,
+            "trace": trace,
+            "metrics": metrics
+        }
 
     # Create prompt for LLM
     prompt = f"""Selected item details:
