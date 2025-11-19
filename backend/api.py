@@ -209,23 +209,17 @@ async def run_procurement(request: ProcurementRequest):
             "weights": request.weights or {"price": 0.4, "lead_time": 0.3, "reliability": 0.3}
         }
 
-        # Check if OpenAI is selected but no API key
+        # Handle API key for OpenAI provider
         import os
         import sys
-        api_key_to_use = request.api_key
-        if request.llm_provider.lower() == "openai" and not request.api_key:
-            # Use environment variable as fallback
-            api_key_to_use = os.getenv("OPENAI_API_KEY")
+        api_key_to_use = None
 
-            # Debug: Show what env vars exist
-            all_env_keys = sorted(list(os.environ.keys()))
-            print(f"DEBUG: Total env vars: {len(all_env_keys)}", flush=True)
-            print(f"DEBUG: Sample env vars: {all_env_keys[:10]}", flush=True)
-            print(f"DEBUG: OPENAI_API_KEY found: {api_key_to_use is not None}", flush=True)
-            print(f"DEBUG: OPENAI-related vars: {[k for k in all_env_keys if 'OPENAI' in k.upper()]}", flush=True)
-            sys.stdout.flush()
+        if request.llm_provider.lower() == "openai":
+            # Use provided API key or fall back to environment variable
+            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
 
             if not api_key_to_use:
+                all_env_keys = sorted(list(os.environ.keys()))
                 raise HTTPException(
                     status_code=400,
                     detail=f"OpenAI API key required. Total env vars: {len(all_env_keys)}, OPENAI vars: {[k for k in all_env_keys if 'OPENAI' in k.upper()]}"
