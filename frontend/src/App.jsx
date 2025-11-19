@@ -7,7 +7,29 @@ import ExecutionTrace from './components/ExecutionTrace'
 import MetricsPanel from './components/MetricsPanel'
 import NegotiationPanel from './components/NegotiationPanel'
 
-const API_BASE = 'http://localhost:8000'
+// Get API base URL - use env var if available, otherwise construct from current window location
+const getAPIBase = () => {
+  // For development
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  }
+
+  // For production on Render: if VITE_API_URL is set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+
+  // Fallback: use the backend service URL based on current hostname
+  // On Render, both services share the same domain/subdomain pattern
+  const currentHost = window.location.hostname
+  if (currentHost.includes('onrender.com')) {
+    return `https://procurement-agent-api.onrender.com`
+  }
+
+  return 'http://localhost:8000'
+}
+
+const API_BASE = getAPIBase()
 
 function App() {
   const [components, setComponents] = useState([])
