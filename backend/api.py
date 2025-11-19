@@ -202,6 +202,8 @@ async def run_procurement(request: ProcurementRequest):
             # Use environment variable as fallback
             import os
             api_key_to_use = os.getenv("OPENAI_API_KEY")
+            print(f"DEBUG: Checking OPENAI_API_KEY from env: {api_key_to_use is not None}")
+            print(f"DEBUG: All env vars containing OPENAI: {[k for k in os.environ.keys() if 'OPENAI' in k]}")
             if not api_key_to_use:
                 raise HTTPException(
                     status_code=400,
