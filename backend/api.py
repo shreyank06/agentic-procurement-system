@@ -20,6 +20,8 @@ from catalog import Catalog
 from procurement import plan_procurement, negotiate_procurement
 from llm_adapter import select_llm_provider
 from cost_optimizer import CostOptimizer
+from cost_optimization_agent import CostOptimizationAgent
+from negotiation_agent import NegotiationAgent
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -81,6 +83,16 @@ class NegotiationRequest(BaseModel):
     """Request model for negotiation endpoint."""
     selected_item: Dict = Field(..., description="Selected item from procurement")
     request: Dict = Field(..., description="Original procurement request")
+
+
+class ChatRequest(BaseModel):
+    """Request model for interactive chat endpoints."""
+    user_message: str = Field(..., description="User message in the chat")
+    conversation: List[Dict] = Field(default_factory=list, description="Conversation history")
+    selected_item: Dict = Field(..., description="Selected item context")
+    request: Dict = Field(..., description="Original procurement request")
+    llm_provider: str = Field("mock", description="LLM provider (mock or openai)")
+    api_key: Optional[str] = Field(None, description="API key for LLM provider")
 
 
 # ============================================================================
@@ -250,37 +262,72 @@ async def run_procurement(request: ProcurementRequest):
         raise HTTPException(status_code=500, detail=f"Procurement failed: {str(e)}")
 
 
-@app.post("/api/negotiate")
-async def run_negotiation(request: NegotiationRequest):
+@app.post("/api/negotiate/start")
+async def start_negotiation(request: NegotiationRequest):
     """
-    Run multi-agent negotiation for selected item.
+    Start vendor negotiation for selected item.
 
-    Returns negotiation transcript and verdict.
+    Returns vendor's opening position.
     """
     try:
-        result = negotiate_procurement(
+        # Get LLM provider from request or use mock
+        llm_provider = getattr(request, 'llm_provider', 'mock')
+        api_key = getattr(request, 'api_key', None)
+
+        # Initialize agent
+        agent = NegotiationAgent(llm_provider=llm_provider, api_key=api_key)
+
+        # Start negotiation
+        result = agent.start_negotiation(
             selected_item=request.selected_item,
             request=request.request
         )
+
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Negotiation failed: {str(e)}")
 
 
-@app.post("/api/cost-optimize")
-async def run_cost_optimization(request: NegotiationRequest):
+@app.post("/api/negotiate/chat")
+async def negotiate_chat(request: ChatRequest):
     """
-    Run multi-agent cost optimization discussion.
+    Continue vendor negotiation with buyer proposals.
 
-    Agents discuss strategies to reduce procurement costs.
-    Returns discussion transcript and cost savings analysis.
+    User can make offers and negotiate terms with the vendor.
     """
     try:
-        # Initialize cost optimizer
-        optimizer = CostOptimizer(llm_provider="mock")
+        # Initialize agent
+        agent = NegotiationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
 
-        # Run optimization
-        result = optimizer.optimize(
+        # Set context from conversation
+        if request.conversation:
+            agent.selected_item = request.selected_item
+
+        # Get vendor response
+        response = agent.respond_to_offer(request.user_message, request.conversation)
+
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Negotiation failed: {str(e)}")
+
+
+@app.post("/api/cost-optimize/start")
+async def start_cost_optimization(request: NegotiationRequest):
+    """
+    Start cost optimization analysis.
+
+    Returns initial cost analysis and savings recommendations.
+    """
+    try:
+        # Get LLM provider from request or use mock
+        llm_provider = getattr(request, 'llm_provider', 'mock')
+        api_key = getattr(request, 'api_key', None)
+
+        # Initialize agent
+        agent = CostOptimizationAgent(llm_provider=llm_provider, api_key=api_key)
+
+        # Get initial analysis
+        result = agent.analyze_costs(
             selected_item=request.selected_item,
             request=request.request
         )
@@ -288,6 +335,25 @@ async def run_cost_optimization(request: NegotiationRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Cost optimization failed: {str(e)}")
+
+
+@app.post("/api/cost-optimize/chat")
+async def cost_optimize_chat(request: ChatRequest):
+    """
+    Continue cost optimization discussion with follow-up questions.
+
+    User can ask specific questions about cost optimization strategies.
+    """
+    try:
+        # Initialize agent
+        agent = CostOptimizationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+
+        # Get agent response
+        response = agent.chat(request.user_message, request.conversation)
+
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cost optimization chat failed: {str(e)}")
 
 
 # ============================================================================

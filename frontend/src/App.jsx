@@ -93,6 +93,7 @@ function App() {
 
   const handleCostOptimize = () => {
     setCostOptimization(true)
+    setNegotiation(null)  // Hide negotiation when optimizing costs
   }
 
   const handleCloseCostOptimization = () => {
