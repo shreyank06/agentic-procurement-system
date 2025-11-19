@@ -58,6 +58,7 @@ class ProcurementRequest(BaseModel):
     top_k: int = Field(3, description="Number of top candidates to return")
     investigate: bool = Field(False, description="Enable tool investigation")
     llm_provider: str = Field("mock", description="LLM provider (mock or openai)")
+    api_key: Optional[str] = Field(None, description="API key for LLM provider (required for OpenAI)")
 
     class Config:
         schema_extra = {
@@ -69,7 +70,8 @@ class ProcurementRequest(BaseModel):
                 "weights": {"price": 0.4, "lead_time": 0.3, "reliability": 0.3},
                 "top_k": 3,
                 "investigate": False,
-                "llm_provider": "mock"
+                "llm_provider": "mock",
+                "api_key": None
             }
         }
 
@@ -111,7 +113,7 @@ async def get_components():
     """Get list of available component types."""
     try:
         # Get all items and extract unique component types
-        all_items = catalog.catalog_data
+        all_items = catalog.items
         components = list(set(item["component"] for item in all_items))
 
         # Get count for each component
@@ -145,7 +147,7 @@ async def get_vendors():
         # Get item count per vendor
         vendor_details = {}
         for vendor in vendors:
-            items = [item for item in catalog.catalog_data if item["vendor"] == vendor]
+            items = [item for item in catalog.items if item["vendor"] == vendor]
             vendor_details[vendor] = {
                 "item_count": len(items),
                 "components": list(set(item["component"] for item in items))
@@ -167,7 +169,7 @@ async def get_catalog_items(component: Optional[str] = None):
         if component:
             items = catalog.search(component)
         else:
-            items = catalog.catalog_data
+            items = catalog.items
 
         return {
             "items": items,
@@ -194,12 +196,25 @@ async def run_procurement(request: ProcurementRequest):
             "weights": request.weights or {"price": 0.4, "lead_time": 0.3, "reliability": 0.3}
         }
 
+        # Check if OpenAI is selected but no API key
+        api_key_to_use = request.api_key
+        if request.llm_provider.lower() == "openai" and not request.api_key:
+            # Use environment variable as fallback
+            import os
+            api_key_to_use = os.getenv("OPENAI_API_KEY")
+            if not api_key_to_use:
+                raise HTTPException(
+                    status_code=400,
+                    detail="OpenAI API key is required. Please provide it in the request or set OPENAI_API_KEY environment variable."
+                )
+
         # Run procurement
         result = plan_procurement(
             request=request_dict,
             top_k=request.top_k,
             investigate=request.investigate,
-            llm_provider=request.llm_provider
+            llm_provider=request.llm_provider,
+            api_key=api_key_to_use
         )
 
         # Check for errors
@@ -242,7 +257,7 @@ async def run_negotiation(request: NegotiationRequest):
 async def startup_event():
     """Initialize resources on startup."""
     print("🚀 Procurement Agent API starting...")
-    print(f"📁 Catalog loaded: {len(catalog.catalog_data)} items")
+    print(f"📁 Catalog loaded: {len(catalog.items)} items")
     print(f"🏪 Vendors: {len(catalog.list_vendors())}")
     print("✅ API ready at http://localhost:8000")
     print("📚 API docs at http://localhost:8000/docs")
