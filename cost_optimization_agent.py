@@ -59,13 +59,15 @@ class CostOptimizationAgent:
         self.conversation_history.append(("agent", analysis))
         return result
 
-    def chat(self, user_message: str, conversation: List[Dict]) -> Dict:
+    def chat(self, user_message: str, conversation: List[Dict], selected_item: Dict = None, request: Dict = None) -> Dict:
         """
         Handle user follow-up questions about cost optimization.
 
         Args:
             user_message: User's question or feedback
             conversation: Current conversation history
+            selected_item: The selected component (for context)
+            request: Original procurement request (for context)
 
         Returns:
             Agent response with updated conversation
@@ -75,25 +77,42 @@ class CostOptimizationAgent:
         # Build context from conversation
         context = self._build_chat_context(conversation)
 
-        # Create response prompt
-        prompt = f"""You are a cost optimization analyst helping to reduce procurement costs.
+        # Build item context if available
+        item_context = ""
+        if selected_item:
+            item_context = f"""
+Selected Item Context:
+- ID: {selected_item.get('id', 'Unknown')}
+- Vendor: {selected_item.get('vendor', 'Unknown')}
+- Current Price: ${selected_item.get('price', 0)}
+- Lead Time: {selected_item.get('lead_time_days', 0)} days
+- Reliability: {selected_item.get('reliability', 0)}
+"""
 
-Previous discussion:
+        # Create response prompt
+        prompt = f"""You are an expert cost optimization analyst. Analyze the following situation and provide specific, actionable advice.
+
+{item_context}
+
+Original Request Budget: ${request.get('max_cost', 'Not specified') if request else 'Not specified'}
+Delivery Deadline: {request.get('latest_delivery_days', 'Not specified') if request else 'Not specified'} days
+
+Conversation History:
 {context}
 
-User question: {user_message}
+User's Latest Question: {user_message}
 
-Provide a helpful, specific response addressing their question. Consider:
-- Vendor negotiation strategies
-- Specification relaxation opportunities
-- Bulk ordering benefits
-- Long-term contract advantages
-- Logistics and delivery cost optimization
+Provide a direct, specific answer to their question. Focus on:
+1. Concrete cost reduction strategies (percentages and amounts when possible)
+2. Vendor negotiation tactics they can use
+3. Specification compromises they could consider
+4. Volume/commitment benefits
+5. Timeline flexibility benefits
 
-Keep response concise and actionable."""
+Be practical and realistic. If they ask about quality-cost tradeoffs, explain the specific quality impacts."""
 
         # Get response from LLM
-        response = self.llm.generate(prompt, max_tokens=400)
+        response = self.llm.generate(prompt, max_tokens=500)
 
         result = {
             "role": "agent",

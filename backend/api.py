@@ -303,8 +303,12 @@ async def negotiate_chat(request: ChatRequest):
         if request.conversation:
             agent.selected_item = request.selected_item
 
-        # Get vendor response
-        response = agent.respond_to_offer(request.user_message, request.conversation)
+        # Get vendor response with full context
+        response = agent.respond_to_offer(
+            request.user_message,
+            request.conversation,
+            request=request.request
+        )
 
         return response
     except Exception as e:
@@ -348,8 +352,13 @@ async def cost_optimize_chat(request: ChatRequest):
         # Initialize agent
         agent = CostOptimizationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
 
-        # Get agent response
-        response = agent.chat(request.user_message, request.conversation)
+        # Get agent response with full context
+        response = agent.chat(
+            request.user_message,
+            request.conversation,
+            selected_item=request.selected_item,
+            request=request.request
+        )
 
         return response
     except Exception as e:

@@ -57,13 +57,14 @@ class NegotiationAgent:
 
         return result
 
-    def respond_to_offer(self, user_message: str, conversation: List[Dict]) -> Dict:
+    def respond_to_offer(self, user_message: str, conversation: List[Dict], request: Dict = None) -> Dict:
         """
         Vendor responds to buyer's negotiation message.
 
         Args:
             user_message: Buyer's proposal or question
             conversation: Current negotiation history
+            request: Original procurement request (for context)
 
         Returns:
             Vendor's response
@@ -71,26 +72,41 @@ class NegotiationAgent:
         start_time = time.time()
 
         context = self._build_negotiation_context(conversation)
-        prompt = f"""You are a vendor representative negotiating with a buyer about the following item:
 
-Item: {self.selected_item.get('id')} from {self.selected_item.get('vendor')}
-Current Price: ${self.selected_item.get('price')}
-Current Lead Time: {self.selected_item.get('lead_time_days')} days
+        # Add budget context if available
+        budget_info = ""
+        if request:
+            budget_info = f"""
+Buyer's Budget Constraints:
+- Max Cost: ${request.get('max_cost', 'Not specified')}
+- Delivery Deadline: {request.get('latest_delivery_days', 'Not specified')} days
+"""
+
+        prompt = f"""You are a vendor representative from {self.selected_item.get('vendor')} negotiating with a buyer.
+
+Product Being Negotiated:
+- Item: {self.selected_item.get('id')}
+- Current Price: ${self.selected_item.get('price')}
+- Current Lead Time: {self.selected_item.get('lead_time_days')} days
+- Reliability: {self.selected_item.get('reliability')}
+{budget_info}
 
 Negotiation History:
 {context}
 
-Buyer's latest proposal: {user_message}
+Buyer's Latest Message: {user_message}
 
-As the vendor, respond to their proposal. You can:
-- Offer small discounts (5-15%) for larger quantities
-- Adjust delivery times slightly
-- Bundle other components at discounts
-- Offer long-term contract terms
+As the vendor, respond professionally and strategically. Consider:
+- Discounts you can offer (be realistic: 5-20% maximum)
+- Volume/commitment requirements for better pricing
+- Delivery time adjustments
+- Bundle opportunities with other products
+- Long-term partnership benefits
 
-Be realistic but willing to negotiate. Keep response concise and professional."""
+Match their tone - if they're being aggressive, hold firm but remain professional. If they're collaborative, be accommodating.
+Keep response concise and specific with numbers/terms."""
 
-        response = self.llm.generate(prompt, max_tokens=300)
+        response = self.llm.generate(prompt, max_tokens=400)
 
         result = {
             "role": "vendor",
