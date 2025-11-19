@@ -1,4 +1,4 @@
-function SelectedItem({ selected, justification, onOptimize }) {
+function SelectedItem({ selected, justification, onOptimize, onNegotiate }) {
   if (!selected) return null
 
   return (
@@ -13,7 +13,7 @@ function SelectedItem({ selected, justification, onOptimize }) {
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">Selected Item</h2>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
               <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
                 Score: {selected.score?.toFixed(4)}
               </span>
@@ -23,6 +23,14 @@ function SelectedItem({ selected, justification, onOptimize }) {
                   className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-1 rounded-full text-sm font-semibold hover:from-green-700 hover:to-emerald-700 transition-all"
                 >
                   💰 Optimize Cost
+                </button>
+              )}
+              {onNegotiate && (
+                <button
+                  onClick={onNegotiate}
+                  className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold hover:from-indigo-700 hover:to-blue-700 transition-all"
+                >
+                  🤝 Negotiate
                 </button>
               )}
             </div>

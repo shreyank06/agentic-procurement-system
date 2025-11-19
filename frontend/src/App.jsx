@@ -6,7 +6,8 @@ import SelectedItem from './components/SelectedItem'
 import ExecutionTrace from './components/ExecutionTrace'
 import MetricsPanel from './components/MetricsPanel'
 import NegotiationPanel from './components/NegotiationPanel'
-import CostOptimizationPanel from './components/CostOptimizationPanel'
+import InteractiveCostChat from './components/InteractiveCostChat'
+import InteractiveNegotiationChat from './components/InteractiveNegotiationChat'
 
 // Get API base URL - use env var if available, otherwise construct from current window location
 const getAPIBase = () => {
@@ -38,7 +39,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [negotiation, setNegotiation] = useState(null)
-  const [costOptimization, setCostOptimization] = useState(null)
+  const [activeChat, setActiveChat] = useState(null)  // 'cost' or 'negotiation'
   const [error, setError] = useState(null)
 
   // Fetch available components and vendors on mount
@@ -87,17 +88,20 @@ function App() {
   const handleReset = () => {
     setResult(null)
     setNegotiation(null)
-    setCostOptimization(null)
+    setActiveChat(null)
     setError(null)
   }
 
   const handleCostOptimize = () => {
-    setCostOptimization(true)
-    setNegotiation(null)  // Hide negotiation when optimizing costs
+    setActiveChat('cost')
   }
 
-  const handleCloseCostOptimization = () => {
-    setCostOptimization(null)
+  const handleNegotiate = () => {
+    setActiveChat('negotiation')
+  }
+
+  const handleCloseChat = () => {
+    setActiveChat(null)
   }
 
   return (
@@ -163,12 +167,18 @@ function App() {
 
             {result && !loading && (
               <>
-                {/* Cost Optimization Panel */}
-                {costOptimization ? (
-                  <CostOptimizationPanel
+                {/* Interactive Chat Panels */}
+                {activeChat === 'cost' ? (
+                  <InteractiveCostChat
                     selected={result.selected}
                     request={result.request}
-                    onClose={handleCloseCostOptimization}
+                    onClose={handleCloseChat}
+                  />
+                ) : activeChat === 'negotiation' ? (
+                  <InteractiveNegotiationChat
+                    selected={result.selected}
+                    request={result.request}
+                    onClose={handleCloseChat}
                   />
                 ) : (
                   <>
@@ -177,6 +187,7 @@ function App() {
                       selected={result.selected}
                       justification={result.justification}
                       onOptimize={handleCostOptimize}
+                      onNegotiate={handleNegotiate}
                     />
 
                     {/* Candidates List */}
