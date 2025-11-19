@@ -18,6 +18,24 @@
     "specs": {"power_w": 180, "mass_kg": 15}
   },
   {
+    "id": "SP-300",
+    "component": "solar_panel",
+    "vendor": "SolarMax Industries",
+    "price": 6100,
+    "lead_time_days": 28,
+    "reliability": 0.99,
+    "specs": {"power_w": 220, "mass_kg": 18}
+  },
+  {
+    "id": "SP-400",
+    "component": "solar_panel",
+    "vendor": "Ionix Works",
+    "price": 3900,
+    "lead_time_days": 35,
+    "reliability": 0.96,
+    "specs": {"power_w": 120, "mass_kg": 10}
+  },
+  {
     "id": "BAT-50",
     "component": "battery",
     "vendor": "Helios Dynamics",
@@ -34,6 +52,33 @@
     "lead_time_days": 25,
     "reliability": 0.99,
     "specs": {"capacity_wh": 8000, "mass_kg": 12}
+  },
+  {
+    "id": "BAT-100",
+    "component": "battery",
+    "vendor": "PowerCell Corp",
+    "price": 4200,
+    "lead_time_days": 18,
+    "reliability": 0.995,
+    "specs": {"capacity_wh": 10000, "mass_kg": 15}
+  },
+  {
+    "id": "BAT-120",
+    "component": "battery",
+    "vendor": "Astra Components",
+    "price": 1800,
+    "lead_time_days": 8,
+    "reliability": 0.94,
+    "specs": {"capacity_wh": 3000, "mass_kg": 5}
+  },
+  {
+    "id": "BAT-150",
+    "component": "battery",
+    "vendor": "Ionix Works",
+    "price": 3500,
+    "lead_time_days": 22,
+    "reliability": 0.98,
+    "specs": {"capacity_wh": 7500, "mass_kg": 11}
   },
   {
     "id": "THR-1",
@@ -54,6 +99,24 @@
     "specs": {"thrust_n": 28, "isp_s": 380}
   },
   {
+    "id": "THR-3",
+    "component": "thruster",
+    "vendor": "PropulseX Ltd",
+    "price": 8200,
+    "lead_time_days": 30,
+    "reliability": 0.97,
+    "specs": {"thrust_n": 35, "isp_s": 350}
+  },
+  {
+    "id": "THR-4",
+    "component": "thruster",
+    "vendor": "Helios Dynamics",
+    "price": 6800,
+    "lead_time_days": 40,
+    "reliability": 0.95,
+    "specs": {"thrust_n": 25, "isp_s": 310}
+  },
+  {
     "id": "CM-10",
     "component": "comm_module",
     "vendor": "LunaTech Supplies",
@@ -70,5 +133,140 @@
     "lead_time_days": 12,
     "reliability": 0.985,
     "specs": {"bandwidth_mbps": 50, "mass_kg": 4}
+  },
+  {
+    "id": "CM-30",
+    "component": "comm_module",
+    "vendor": "SignalTech Systems",
+    "price": 2100,
+    "lead_time_days": 15,
+    "reliability": 0.99,
+    "specs": {"bandwidth_mbps": 100, "mass_kg": 5}
+  },
+  {
+    "id": "CM-40",
+    "component": "comm_module",
+    "vendor": "Astra Components",
+    "price": 1200,
+    "lead_time_days": 5,
+    "reliability": 0.92,
+    "specs": {"bandwidth_mbps": 15, "mass_kg": 2}
+  },
+  {
+    "id": "RAD-10",
+    "component": "radiator",
+    "vendor": "ThermalDyne",
+    "price": 1500,
+    "lead_time_days": 12,
+    "reliability": 0.98,
+    "specs": {"heat_capacity_w": 500, "mass_kg": 8}
+  },
+  {
+    "id": "RAD-20",
+    "component": "radiator",
+    "vendor": "Helios Dynamics",
+    "price": 2200,
+    "lead_time_days": 20,
+    "reliability": 0.99,
+    "specs": {"heat_capacity_w": 800, "mass_kg": 12}
+  },
+  {
+    "id": "RAD-30",
+    "component": "radiator",
+    "vendor": "CoolSys Corp",
+    "price": 1800,
+    "lead_time_days": 10,
+    "reliability": 0.97,
+    "specs": {"heat_capacity_w": 600, "mass_kg": 10}
+  },
+  {
+    "id": "STR-10",
+    "component": "structure",
+    "vendor": "Aerospace Alloys",
+    "price": 3200,
+    "lead_time_days": 25,
+    "reliability": 0.99,
+    "specs": {"mass_kg": 50, "material": "aluminum_alloy"}
+  },
+  {
+    "id": "STR-20",
+    "component": "structure",
+    "vendor": "Composite Dynamics",
+    "price": 4100,
+    "lead_time_days": 35,
+    "reliability": 0.995,
+    "specs": {"mass_kg": 35, "material": "carbon_fiber"}
+  },
+  {
+    "id": "STR-30",
+    "component": "structure",
+    "vendor": "Helios Dynamics",
+    "price": 2800,
+    "lead_time_days": 18,
+    "reliability": 0.97,
+    "specs": {"mass_kg": 60, "material": "titanium"}
+  },
+  {
+    "id": "OBC-10",
+    "component": "onboard_computer",
+    "vendor": "SpaceCompute Inc",
+    "price": 5800,
+    "lead_time_days": 22,
+    "reliability": 0.98,
+    "specs": {"cpu_ghz": 2.4, "ram_gb": 8, "storage_gb": 256}
+  },
+  {
+    "id": "OBC-20",
+    "component": "onboard_computer",
+    "vendor": "Astra Components",
+    "price": 4500,
+    "lead_time_days": 15,
+    "reliability": 0.96,
+    "specs": {"cpu_ghz": 2.0, "ram_gb": 4, "storage_gb": 128}
+  },
+  {
+    "id": "OBC-30",
+    "component": "onboard_computer",
+    "vendor": "Helios Dynamics",
+    "price": 7200,
+    "lead_time_days": 30,
+    "reliability": 0.99,
+    "specs": {"cpu_ghz": 3.0, "ram_gb": 16, "storage_gb": 512}
+  },
+  {
+    "id": "GYRO-10",
+    "component": "gyroscope",
+    "vendor": "PrecisionNav Systems",
+    "price": 2800,
+    "lead_time_days": 14,
+    "reliability": 0.997,
+    "specs": {"range_deg_s": 500, "bias_drift": 0.5}
+  },
+  {
+    "id": "GYRO-20",
+    "component": "gyroscope",
+    "vendor": "Ionix Works",
+    "price": 1900,
+    "lead_time_days": 10,
+    "reliability": 0.99,
+    "specs": {"range_deg_s": 250, "bias_drift": 1.0}
+  },
+  {
+    "id": "ACC-10",
+    "component": "accelerometer",
+    "vendor": "SensorTech",
+    "price": 1200,
+    "lead_time_days": 8,
+    "reliability": 0.995,
+    "specs": {"range_g": 8, "resolution_mg": 1}
+  },
+  {
+    "id": "ACC-20",
+    "component": "accelerometer",
+    "vendor": "Helios Dynamics",
+    "price": 1600,
+    "lead_time_days": 12,
+    "reliability": 0.998,
+    "specs": {"range_g": 16, "resolution_mg": 0.5}
   }
 ]
