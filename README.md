@@ -72,6 +72,33 @@ pip install -r requirements-dev.txt
 
 ## Usage
 
+### Web Application (NEW!)
+
+The system now includes a modern web interface built with React and FastAPI.
+
+**Quick Start:**
+```bash
+# Using Docker Compose (recommended)
+docker-compose up --build
+
+# Or using the startup script
+./start-webapp.sh
+
+# Or manually
+# Terminal 1 - Backend
+cd backend && python api.py
+
+# Terminal 2 - Frontend
+cd frontend && npm install && npm run dev
+```
+
+**Access:**
+- **Web UI**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+
+See [WEB_APP_README.md](./WEB_APP_README.md) for detailed web app documentation.
+
 ### Command Line Interface
 
 Basic usage:
