@@ -1,4 +1,4 @@
-function SelectedItem({ selected, justification }) {
+function SelectedItem({ selected, justification, onOptimize }) {
   if (!selected) return null
 
   return (
@@ -13,9 +13,19 @@ function SelectedItem({ selected, justification }) {
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">Selected Item</h2>
-            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-              Score: {selected.score?.toFixed(4)}
-            </span>
+            <div className="flex gap-2 items-center">
+              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                Score: {selected.score?.toFixed(4)}
+              </span>
+              {onOptimize && (
+                <button
+                  onClick={onOptimize}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-1 rounded-full text-sm font-semibold hover:from-green-700 hover:to-emerald-700 transition-all"
+                >
+                  💰 Optimize Cost
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">

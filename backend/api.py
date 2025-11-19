@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from catalog import Catalog
 from procurement import plan_procurement, negotiate_procurement
 from llm_adapter import select_llm_provider
+from cost_optimizer import CostOptimizer
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -264,6 +265,29 @@ async def run_negotiation(request: NegotiationRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Negotiation failed: {str(e)}")
+
+
+@app.post("/api/cost-optimize")
+async def run_cost_optimization(request: NegotiationRequest):
+    """
+    Run multi-agent cost optimization discussion.
+
+    Agents discuss strategies to reduce procurement costs.
+    Returns discussion transcript and cost savings analysis.
+    """
+    try:
+        # Initialize cost optimizer
+        optimizer = CostOptimizer(llm_provider="mock")
+
+        # Run optimization
+        result = optimizer.optimize(
+            selected_item=request.selected_item,
+            request=request.request
+        )
+
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cost optimization failed: {str(e)}")
 
 
 # ============================================================================

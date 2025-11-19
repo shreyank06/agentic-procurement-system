@@ -6,6 +6,7 @@ import SelectedItem from './components/SelectedItem'
 import ExecutionTrace from './components/ExecutionTrace'
 import MetricsPanel from './components/MetricsPanel'
 import NegotiationPanel from './components/NegotiationPanel'
+import CostOptimizationPanel from './components/CostOptimizationPanel'
 
 // Get API base URL - use env var if available, otherwise construct from current window location
 const getAPIBase = () => {
@@ -37,6 +38,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [negotiation, setNegotiation] = useState(null)
+  const [costOptimization, setCostOptimization] = useState(null)
   const [error, setError] = useState(null)
 
   // Fetch available components and vendors on mount
@@ -85,7 +87,16 @@ function App() {
   const handleReset = () => {
     setResult(null)
     setNegotiation(null)
+    setCostOptimization(null)
     setError(null)
+  }
+
+  const handleCostOptimize = () => {
+    setCostOptimization(true)
+  }
+
+  const handleCloseCostOptimization = () => {
+    setCostOptimization(null)
   }
 
   return (
@@ -151,20 +162,35 @@ function App() {
 
             {result && !loading && (
               <>
-                {/* Selected Item */}
-                <SelectedItem selected={result.selected} justification={result.justification} />
+                {/* Cost Optimization Panel */}
+                {costOptimization ? (
+                  <CostOptimizationPanel
+                    selected={result.selected}
+                    request={result.request}
+                    onClose={handleCloseCostOptimization}
+                  />
+                ) : (
+                  <>
+                    {/* Selected Item */}
+                    <SelectedItem
+                      selected={result.selected}
+                      justification={result.justification}
+                      onOptimize={handleCostOptimize}
+                    />
 
-                {/* Candidates List */}
-                <CandidatesList candidates={result.candidates} />
+                    {/* Candidates List */}
+                    <CandidatesList candidates={result.candidates} />
 
-                {/* Negotiation */}
-                {negotiation && <NegotiationPanel negotiation={negotiation} />}
+                    {/* Negotiation */}
+                    {negotiation && <NegotiationPanel negotiation={negotiation} />}
 
-                {/* Execution Trace */}
-                <ExecutionTrace trace={result.trace} />
+                    {/* Execution Trace */}
+                    <ExecutionTrace trace={result.trace} />
 
-                {/* Metrics */}
-                {result.metrics && <MetricsPanel metrics={result.metrics} />}
+                    {/* Metrics */}
+                    {result.metrics && <MetricsPanel metrics={result.metrics} />}
+                  </>
+                )}
               </>
             )}
 
