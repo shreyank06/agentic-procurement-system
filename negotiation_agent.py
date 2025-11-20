@@ -71,33 +71,17 @@ class NegotiationAgent:
         """
         start_time = time.time()
 
-        context = self._build_negotiation_context(conversation)
+        # Extract quantity from conversation or message
+        quantity = self._extract_quantity(user_message, conversation)
 
-        # Add budget context if available
-        budget_info = ""
-        if request:
-            budget_info = f"""
-Buyer's Budget Constraints:
-- Max Cost: ${request.get('max_cost', 'Not specified')}
-- Delivery Deadline: {request.get('latest_delivery_days', 'Not specified')} days
-"""
+        # Calculate appropriate discount based on quantity
+        discount = self._calculate_vendor_discount(quantity)
 
-        prompt = f"""You are a vendor negotiating {self.selected_item.get('id')} at ${self.selected_item.get('price')}/unit.
+        # Determine if this is a repeated request
+        last_offer = self._get_last_offer(conversation)
 
-Buyer said: {user_message}
-
-Previous negotiation context:
-{context}
-
-Respond in 2-3 sentences. Rules:
-1. BE CONSISTENT - if you already stated a discount for this quantity, stick to it
-2. DO NOT contradict previous offers or discounts already mentioned
-3. Be firm: small orders (under 15 units) = max 5% discount; medium (15-50) = max 8-10% discount
-4. If buyer pushes hard, you can slightly increase but acknowledge the change ("Okay, I can improve to...")
-5. NO excessive politeness or thanking
-6. For refusal: state clearly and offer alternative (e.g., "5% is my final offer, or you can order 50+ for 12%")"""
-
-        response = self.llm.generate(prompt, max_tokens=200)
+        # Generate response based on negotiation state
+        response = self._generate_negotiation_response(user_message, quantity, discount, last_offer)
 
         result = {
             "role": "vendor",
@@ -107,6 +91,85 @@ Respond in 2-3 sentences. Rules:
         }
 
         return result
+
+    def _extract_quantity(self, user_message: str, conversation: List[Dict]) -> int:
+        """Extract order quantity from message or conversation."""
+        import re
+        # Look for numbers in the current message
+        numbers = re.findall(r'\d+', user_message)
+        if numbers:
+            return int(numbers[0])
+
+        # Look back in conversation for mentioned quantity
+        for msg in reversed(conversation):
+            numbers = re.findall(r'\d+', msg.get('message', ''))
+            if numbers:
+                return int(numbers[0])
+
+        return 0
+
+    def _calculate_vendor_discount(self, quantity: int) -> float:
+        """Calculate appropriate discount based on quantity."""
+        if quantity < 10:
+            return 0.05  # 5% for very small
+        elif quantity < 15:
+            return 0.05  # 5% for small
+        elif quantity < 30:
+            return 0.08  # 8% for medium
+        elif quantity < 50:
+            return 0.10  # 10% for larger medium
+        else:
+            return 0.12  # 12% for large
+
+    def _get_last_offer(self, conversation: List[Dict]) -> dict:
+        """Get the last vendor offer from conversation."""
+        for msg in reversed(conversation):
+            if msg.get('role') == 'vendor':
+                text = msg.get('message', '')
+                # Extract discount percentage if mentioned
+                import re
+                discounts = re.findall(r'(\d+)%', text)
+                if discounts:
+                    return {
+                        "discount": int(discounts[0]),
+                        "message": text
+                    }
+        return None
+
+    def _generate_negotiation_response(self, user_message: str, quantity: int, discount: float, last_offer: dict) -> str:
+        """Generate vendor response based on negotiation state."""
+        price = self.selected_item.get('price', 5200)
+        discount_pct = int(discount * 100)
+        discounted_price = price * (1 - discount)
+        total_price = discounted_price * quantity if quantity > 0 else discounted_price
+
+        # Detect buyer behavior
+        wants_more = any(word in user_message.lower() for word in ['more', 'higher', 'increase', 'better', 'can you give'])
+        asking_alternative = any(word in user_message.lower() for word in ['alternative', 'option', 'else', 'other'])
+        refusing = any(word in user_message.lower() for word in ['no', 'not interested', 'cant', 'cannot', 'refuse', 'sorry'])
+
+        # If last offer exists and buyer is asking for more
+        if last_offer and wants_more:
+            last_discount = last_offer.get('discount', 0)
+            if last_discount >= discount_pct:
+                # Stick to what we already offered
+                return f"As I stated, {last_discount}% is the best I can offer for {quantity} units, bringing the total to ${total_price:,.0f}. This is firm unless you can commit to a larger volume."
+            else:
+                # Can only marginally improve
+                improved_discount = min(last_discount + 2, discount_pct)
+                improved_price = price * (1 - (improved_discount / 100))
+                improved_total = improved_price * quantity if quantity > 0 else improved_price
+                return f"Okay, I can improve to {improved_discount}% for {quantity} units, totaling ${improved_total:,.0f}. This is my final offer at this volume."
+
+        # If buyer is refusing
+        if refusing:
+            return f"Understood. If you reconsider, {discount_pct}% remains available for {quantity} units (${total_price:,.0f}), or we can discuss larger volumes for better pricing."
+
+        # Standard offer
+        if quantity > 0:
+            return f"For {quantity} units, I can offer {discount_pct}% off, bringing the unit price to ${discounted_price:,.0f} and total to ${total_price:,.0f}. Let me know if this works for you."
+        else:
+            return f"I can offer {discount_pct}% discount for volume purchases. Just let me know your quantity and we'll finalize the terms."
 
     def _build_opening_prompt(self, selected_item: Dict, request: Dict) -> str:
         """Build the opening negotiation prompt."""
