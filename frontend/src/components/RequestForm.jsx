@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [formData, setFormData] = useState({
     component: '',
     spec_filters: {},
@@ -93,7 +94,10 @@ function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
 
   return (
     <div className="card sticky top-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Procurement Request</h2>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Procurement Request</h2>
+        <p className="text-sm text-gray-600 mt-1">Find the best component for your needs</p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Component Selection */}
@@ -160,114 +164,132 @@ function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
           </div>
         </div>
 
-        {/* Constraints */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label">Max Cost ($)</label>
-            <input
-              type="number"
-              name="max_cost"
-              value={formData.max_cost}
-              onChange={handleChange}
-              placeholder="6000"
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label">Max Delivery (days)</label>
-            <input
-              type="number"
-              name="latest_delivery_days"
-              value={formData.latest_delivery_days}
-              onChange={handleChange}
-              placeholder="30"
-              className="input-field"
-            />
-          </div>
-        </div>
-
-        {/* Weights */}
+        {/* Essential Constraints */}
         <div>
-          <label className="label">Scoring Weights</label>
-          <div className="space-y-3">
-            {Object.entries(formData.weights).map(([key, value]) => (
-              <div key={key}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700 capitalize">{key.replace('_', ' ')}</span>
-                  <span className="font-medium text-gray-900">{value}</span>
-                </div>
-                <input
-                  type="range"
-                  name={key}
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={value}
-                  onChange={handleWeightChange}
-                  className="w-full"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Options */}
-        <div>
-          <label className="label">Options</label>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
+          <label className="label">Budget & Timeline</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-600">Max Cost ($) - Optional</label>
               <input
                 type="number"
-                name="top_k"
-                min="1"
-                max="10"
-                value={formData.top_k}
+                name="max_cost"
+                value={formData.max_cost}
                 onChange={handleChange}
-                className="input-field w-20"
+                placeholder="6000"
+                className="input-field text-sm"
               />
-              <span className="text-sm text-gray-700">Top candidates to show</span>
             </div>
-
-            <label className="flex items-center gap-2 cursor-pointer">
+            <div>
+              <label className="text-xs text-gray-600">Delivery (days) - Optional</label>
               <input
-                type="checkbox"
-                name="investigate"
-                checked={formData.investigate}
+                type="number"
+                name="latest_delivery_days"
+                value={formData.latest_delivery_days}
                 onChange={handleChange}
-                className="w-4 h-4 text-blue-600 rounded"
+                placeholder="30"
+                className="input-field text-sm"
               />
-              <span className="text-sm text-gray-700">Enable tool investigation</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="negotiate"
-                checked={formData.negotiate}
-                onChange={handleChange}
-                className="w-4 h-4 text-blue-600 rounded"
-              />
-              <span className="text-sm text-gray-700">Run negotiation</span>
-            </label>
-
-            <select
-              name="llm_provider"
-              value={formData.llm_provider}
-              onChange={handleChange}
-              className="input-field"
-            >
-              <option value="mock">Mock LLM (Offline)</option>
-              <option value="openai">OpenAI</option>
-            </select>
-
-            {formData.llm_provider === 'openai' && (
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs text-blue-700">
-                  Using OpenAI API key from server environment configuration.
-                </p>
-              </div>
-            )}
+            </div>
           </div>
+        </div>
+
+        {/* Advanced Options - Collapsible */}
+        <div className="border-t pt-4">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            <span>{showAdvanced ? '▼' : '▶'}</span>
+            Advanced Options
+          </button>
+
+          {showAdvanced && (
+            <div className="mt-4 space-y-4 pl-4 border-l-2 border-blue-200">
+              {/* Scoring Weights */}
+              <div>
+                <label className="label text-sm">Scoring Weights</label>
+                <div className="space-y-2">
+                  {Object.entries(formData.weights).map(([key, value]) => (
+                    <div key={key}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-700 capitalize">{key.replace('_', ' ')}</span>
+                        <span className="font-medium text-gray-900">{value}</span>
+                      </div>
+                      <input
+                        type="range"
+                        name={key}
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={value}
+                        onChange={handleWeightChange}
+                        className="w-full"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Results & Features */}
+              <div>
+                <label className="label text-sm">Results & Features</label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      name="top_k"
+                      min="1"
+                      max="10"
+                      value={formData.top_k}
+                      onChange={handleChange}
+                      className="input-field w-16 text-sm"
+                    />
+                    <span className="text-sm text-gray-700">candidates to show</span>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="investigate"
+                      checked={formData.investigate}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 rounded"
+                    />
+                    <span className="text-sm text-gray-700">Analyze price history</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="negotiate"
+                      checked={formData.negotiate}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 rounded"
+                    />
+                    <span className="text-sm text-gray-700">Auto-negotiate</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* LLM Provider */}
+              <div>
+                <label className="label text-sm">LLM Provider</label>
+                <select
+                  name="llm_provider"
+                  value={formData.llm_provider}
+                  onChange={handleChange}
+                  className="input-field text-sm"
+                >
+                  <option value="mock">Mock LLM (Offline)</option>
+                  <option value="openai">OpenAI</option>
+                </select>
+                {formData.llm_provider === 'openai' && (
+                  <p className="text-xs text-blue-600 mt-2">Using OpenAI API from server config</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
