@@ -175,10 +175,11 @@ class NegotiationAgent:
 
         # Detect different types of questions
         wants_more_discount = any(word in msg_lower for word in ['10%', '12%', '15%', 'more', 'higher', 'better', 'increase', 'can you give', 'can you offer'])
-        asking_delivery = any(word in msg_lower for word in ['how many days', 'delivery', 'how long', 'time', 'days', 'when', 'requirement'])
+        asking_delivery = any(word in msg_lower for word in ['how many days', 'delivery', 'how long', 'time', 'days', 'when', 'requirement', '6 day', '7 day', '8 day'])
         asking_confirmation = any(word in msg_lower for word in ['is final', 'thats final', 'confirm', 'sure', 'correct'])
-        requesting_custom_delivery = any(word in msg_lower for word in ['want', 'need', 'require', 'i want', 'but my requirement'])
-        refusing = any(word in msg_lower for word in ['not interested', 'not intersted', 'not intrested', 'no', 'cant', 'cannot', 'refuse', 'sorry'])
+        requesting_custom_delivery = any(word in msg_lower for word in ['want', 'need', 'require', 'i want', 'but my requirement', 'in 6', 'in 7', 'in 8', 'in 5'])
+        refusing = any(word in msg_lower for word in ['not interested', 'not intersted', 'not intrested', 'no', 'cant', 'cannot', 'refuse', 'sorry', 'too high', 'too expensive'])
+        negotiating_surcharge = any(word in msg_lower for word in ['surcharge', '20%', '30%', '40%'])
 
         # Extract any mentioned number (for delivery days request)
         numbers = re.findall(r'\b(\d+)\s*days?\b', msg_lower)
@@ -207,6 +208,27 @@ class NegotiationAgent:
             else:
                 # Standard or slower is fine
                 return f"{requested_days} days works - that's within our standard {lead_time}-day timeline."
+
+        # If negotiating surcharge (after getting surcharge offer)
+        if negotiating_surcharge and last_offer:
+            last_msg = last_offer.get('message', '')
+            # Check if last message mentioned a surcharge
+            if 'surcharge' in last_msg:
+                # Extract surcharge percentage from last offer
+                surcharge_match = re.search(r'(\d+)%\s*surcharge', last_msg)
+                if surcharge_match:
+                    last_surcharge = int(surcharge_match.group(1))
+                    # Try to find requested days from last message or conversation
+                    last_days_match = re.search(r'(\d+)-day', last_msg)
+                    days_for_delivery = int(last_days_match.group(1)) if last_days_match else requested_days
+
+                    # User is negotiating surcharge down
+                    if '20%' in msg_lower and last_surcharge > 20:
+                        return f"I can work with 25% surcharge for expedited {days_for_delivery}-day delivery on {quantity} units. That's a fair compromise."
+                    elif '30%' in msg_lower and last_surcharge > 30:
+                        return f"We can do 35% surcharge for the {days_for_delivery}-day timeline. That's the best I can offer for expedited service."
+                    elif 'too high' in msg_lower or 'expensive' in msg_lower:
+                        return f"I understand. The minimum I can offer for {days_for_delivery}-day delivery is {max(20, last_surcharge - 10)}% surcharge. Standard {lead_time}-day delivery is complimentary."
 
         # If asking about delivery/timeline - answer that question
         if asking_delivery and 'price' not in msg_lower and 'discount' not in msg_lower and 'cost' not in msg_lower:
