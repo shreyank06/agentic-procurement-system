@@ -85,6 +85,14 @@ class NegotiationRequest(BaseModel):
     request: Dict = Field(..., description="Original procurement request")
 
 
+class AnalysisRequest(BaseModel):
+    """Request model for initial analysis endpoints (cost optimization and negotiation start)."""
+    selected_item: Dict = Field(..., description="Selected item context")
+    request: Dict = Field(..., description="Original procurement request")
+    llm_provider: str = Field("mock", description="LLM provider (mock or openai)")
+    api_key: Optional[str] = Field(None, description="API key for LLM provider")
+
+
 class ChatRequest(BaseModel):
     """Request model for interactive chat endpoints."""
     user_message: str = Field(..., description="User message in the chat")
@@ -263,7 +271,7 @@ async def run_procurement(request: ProcurementRequest):
 
 
 @app.post("/api/negotiate/start")
-async def start_negotiation(request: ChatRequest):
+async def start_negotiation(request: AnalysisRequest):
     """
     Start vendor negotiation for selected item.
 
@@ -348,7 +356,7 @@ async def negotiate_chat(request: ChatRequest):
 
 
 @app.post("/api/cost-optimize/start")
-async def start_cost_optimization(request: ChatRequest):
+async def start_cost_optimization(request: AnalysisRequest):
     """
     Start cost optimization analysis.
 
