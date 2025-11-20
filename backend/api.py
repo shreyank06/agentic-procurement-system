@@ -13,15 +13,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-# Add parent directory to path to import procurement modules
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from catalog import Catalog
-from procurement import plan_procurement, negotiate_procurement
-from llm_adapter import select_llm_provider
-from cost_optimizer import CostOptimizer
-from cost_optimization_agent import CostOptimizationAgent
-from negotiation_agent import NegotiationAgent
+# Import from new modular structure
+from backend.core.catalog import Catalog
+from backend.core.procurement import plan_procurement
+from backend.agents.cost_optimization_agent import CostOptimizationAgent
+from backend.agents.negotiation_agent import NegotiationAgent
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -40,7 +36,6 @@ app.add_middleware(
 )
 
 # Load catalog at startup with embeddings enabled
-import os
 catalog_path = Path(__file__).parent.parent / "catalog.json"
 enable_embeddings = os.getenv("ENABLE_EMBEDDINGS", "true").lower() == "true"
 openai_key = os.getenv("OPENAI_API_KEY")
@@ -292,7 +287,7 @@ async def start_negotiation(request: AnalysisRequest):
         )
 
         # Check if LLM initialization failed
-        if agent.llm is None:
+        if not agent.llm:
             raise HTTPException(
                 status_code=400,
                 detail="Failed to initialize OpenAI. Please check API key."
@@ -340,7 +335,7 @@ async def negotiate_chat(request: ChatRequest):
         )
 
         # Check if LLM initialization failed
-        if agent.llm is None:
+        if not agent.llm:
             raise HTTPException(
                 status_code=400,
                 detail="Failed to initialize OpenAI. Please check API key."
@@ -388,7 +383,7 @@ async def start_cost_optimization(request: AnalysisRequest):
         )
 
         # Check if LLM initialization failed
-        if agent.llm is None:
+        if not agent.llm:
             raise HTTPException(
                 status_code=400,
                 detail="Failed to initialize OpenAI. Please check API key."
@@ -436,7 +431,7 @@ async def cost_optimize_chat(request: ChatRequest):
         )
 
         # Check if LLM initialization failed
-        if agent.llm is None:
+        if not agent.llm:
             raise HTTPException(
                 status_code=400,
                 detail="Failed to initialize OpenAI. Please check API key."
