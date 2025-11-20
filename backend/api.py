@@ -41,6 +41,9 @@ enable_embeddings = os.getenv("ENABLE_EMBEDDINGS", "true").lower() == "true"
 openai_key = os.getenv("OPENAI_API_KEY")
 catalog = Catalog(str(catalog_path), enable_embeddings=enable_embeddings, api_key=openai_key)
 
+# Session management for stateful agents (e.g., negotiation agent)
+negotiation_sessions: Dict[str, NegotiationAgent] = {}
+
 
 # ============================================================================
 # REQUEST/RESPONSE MODELS
@@ -89,6 +92,7 @@ class AnalysisRequest(BaseModel):
     request: Dict = Field(..., description="Original procurement request")
     llm_provider: str = Field("openai", description="LLM provider (openai only)")
     api_key: Optional[str] = Field(None, description="API key for OpenAI (uses server config if not provided)")
+    session_id: Optional[str] = Field(None, description="Session ID for maintaining agent state")
 
 
 class ChatRequest(BaseModel):
@@ -98,6 +102,7 @@ class ChatRequest(BaseModel):
     selected_item: Dict = Field(..., description="Selected item context")
     request: Dict = Field(..., description="Original procurement request")
     llm_provider: str = Field("openai", description="LLM provider (openai only)")
+    session_id: Optional[str] = Field(None, description="Session ID for maintaining agent state")
     api_key: Optional[str] = Field(None, description="API key for OpenAI (uses server config if not provided)")
 
 
@@ -267,11 +272,12 @@ async def start_negotiation(request: AnalysisRequest):
     """
     Start vendor negotiation for selected item.
 
-    Returns vendor's opening position.
+    Returns vendor's opening position and session ID.
     """
     try:
         # Get OpenAI API key
         import os
+        import uuid
         api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
         if not api_key_to_use:
             raise HTTPException(
@@ -279,7 +285,10 @@ async def start_negotiation(request: AnalysisRequest):
                 detail="OpenAI API key required. Set OPENAI_API_KEY environment variable or provide api_key in request"
             )
 
-        # Initialize agent with LLM provider, API key, and catalog for semantic search
+        # Create or retrieve session
+        session_id = request.session_id or str(uuid.uuid4())
+
+        # Create new agent instance for this session
         agent = NegotiationAgent(
             llm_provider="openai",
             api_key=api_key_to_use,
@@ -293,6 +302,9 @@ async def start_negotiation(request: AnalysisRequest):
                 detail="Failed to initialize OpenAI. Please check API key."
             )
 
+        # Store agent in session
+        negotiation_sessions[session_id] = agent
+
         # Start negotiation
         result = agent.start_negotiation(
             selected_item=request.selected_item,
@@ -303,6 +315,9 @@ async def start_negotiation(request: AnalysisRequest):
         competitors = agent.find_competing_products()
         if competitors:
             result["competitors"] = competitors
+
+        # Add session ID to result
+        result["session_id"] = session_id
 
         return result
     except HTTPException:
@@ -317,33 +332,24 @@ async def negotiate_chat(request: ChatRequest):
     Continue vendor negotiation with buyer proposals.
 
     User can make offers and negotiate terms with the vendor.
+    Maintains agent state across multiple chat messages.
     """
     try:
-        # Get OpenAI API key
-        api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
-        if not api_key_to_use:
+        # Validate session ID
+        if not request.session_id:
             raise HTTPException(
                 status_code=400,
-                detail="OpenAI API key required. Set OPENAI_API_KEY environment variable or provide api_key in request"
+                detail="session_id is required for negotiation chat"
             )
 
-        # Initialize agent with catalog for semantic search
-        agent = NegotiationAgent(
-            llm_provider="openai",
-            api_key=api_key_to_use,
-            catalog=catalog
-        )
-
-        # Check if LLM initialization failed
-        if not agent.llm:
+        # Retrieve agent from session
+        if request.session_id not in negotiation_sessions:
             raise HTTPException(
                 status_code=400,
-                detail="Failed to initialize OpenAI. Please check API key."
+                detail="Invalid session ID. Please start a new negotiation."
             )
 
-        # Set context from conversation
-        if request.conversation:
-            agent.selected_item = request.selected_item
+        agent = negotiation_sessions[request.session_id]
 
         # Get vendor response with full context
         response = agent.respond_to_offer(
@@ -351,6 +357,9 @@ async def negotiate_chat(request: ChatRequest):
             request.conversation,
             request=request.request
         )
+
+        # Add session ID to response
+        response["session_id"] = request.session_id
 
         return response
     except HTTPException:

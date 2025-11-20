@@ -10,6 +10,7 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
   const [userMessage, setUserMessage] = useState('')
   const [orderConfirmed, setOrderConfirmed] = useState(false)
   const [receipt, setReceipt] = useState(null)
+  const [sessionId, setSessionId] = useState(null)
   const messagesEndRef = useRef(null)
 
   // Start negotiation on mount
@@ -41,6 +42,7 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
       })
 
       console.log('Negotiation response:', response.data)
+      setSessionId(response.data.session_id)
       setConversation(response.data.conversation)
     } catch (err) {
       let errorMsg = 'Unknown error'
@@ -77,7 +79,8 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
         selected_item: selected,
         request: request,
         llm_provider: 'openai',
-        api_key: process.env.REACT_APP_OPENAI_API_KEY || ''
+        api_key: process.env.REACT_APP_OPENAI_API_KEY || '',
+        session_id: sessionId
       })
 
       // Add vendor response
