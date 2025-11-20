@@ -90,7 +90,7 @@ Selected Item Context:
 """
 
         # Create response prompt
-        prompt = f"""You are a cost optimization analyst. Answer this question CONCISELY in 2-3 sentences.
+        prompt = f"""You are a cost optimization analyst. Answer the user's question CONCISELY in 2-3 sentences.
 
 {item_context}
 
@@ -99,7 +99,13 @@ Previous Discussion:
 
 User's Question: {user_message}
 
-Provide a SHORT, direct answer with specific numbers if applicable. No lengthy explanations."""
+Rules:
+- Be flexible and practical, not rigid
+- Adjust recommendations based on actual quantity mentioned by buyer
+- Provide realistic discount estimates (typical ranges: 2-5% for small orders, 5-10% for larger)
+- If they ask about a specific quantity, calculate discount for THAT quantity, don't contradict earlier advice
+- Be helpful and give actionable answers, not "you need 100 units"
+- Short, direct answer with specific numbers."""
 
         # Get response from LLM
         response = self.llm.generate(prompt, max_tokens=250)
@@ -121,17 +127,17 @@ Provide a SHORT, direct answer with specific numbers if applicable. No lengthy e
         lead_time = selected_item.get("lead_time_days", 0)
         specs = json.dumps(selected_item.get("specs", {}), indent=2)
 
-        prompt = f"""You are a cost optimization analyst. Provide CONCISE cost optimization strategies for this procurement.
+        prompt = f"""You are a cost optimization analyst. Provide CONCISE cost reduction strategies for this procurement.
 
-Selected Item:
-- ID: {selected_item.get('id')}
-- Component: {component}
-- Vendor: {vendor}
-- Price: ${item_price}
-- Lead Time: {lead_time} days
-- Reliability: {selected_item.get('reliability', 0.0)}
+Item: {component} ({selected_item.get('id')}) from {vendor}
+Price: ${item_price}, Lead: {lead_time} days, Reliability: {selected_item.get('reliability', 0.0)}
 
-REQUEST: Provide a SHORT list (max 5 points) of actionable cost reduction strategies. Be direct and specific with numbers. No lengthy explanations."""
+Provide a SHORT list (3-5 actionable strategies) with realistic numbers:
+- Be practical: suggest discounts for typical quantities (5, 10, 25, 50 units)
+- Don't require unrealistic minimums
+- Focus on what's achievable for a buyer
+- Use realistic discount ranges: 2-5% small orders, 5-15% large orders
+No lengthy explanations."""
 
         return prompt
 
