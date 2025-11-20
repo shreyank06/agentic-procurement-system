@@ -156,6 +156,8 @@ class NegotiationAgent:
 
     def _generate_negotiation_response(self, user_message: str, quantity: int, discount: float, last_offer: dict) -> str:
         """Generate vendor response based on negotiation state."""
+        import re
+
         price = self.selected_item.get('price', 5200)
         lead_time = self.selected_item.get('lead_time_days', 8)
         discount_pct = int(discount * 100)
@@ -166,14 +168,43 @@ class NegotiationAgent:
 
         # Detect different types of questions
         wants_more_discount = any(word in msg_lower for word in ['10%', '12%', '15%', 'more', 'higher', 'better', 'increase', 'can you give', 'can you offer'])
-        asking_delivery = any(word in msg_lower for word in ['how many days', 'delivery', 'how long', 'time', 'days', 'when'])
-        asking_about_quantity = any(word in msg_lower for word in ['what about', 'for', 'on'])
+        asking_delivery = any(word in msg_lower for word in ['how many days', 'delivery', 'how long', 'time', 'days', 'when', 'requirement'])
+        asking_confirmation = any(word in msg_lower for word in ['is final', 'thats final', 'confirm', 'sure', 'correct'])
+        requesting_custom_delivery = any(word in msg_lower for word in ['want', 'need', 'require', 'i want', 'but my requirement'])
         refusing = any(word in msg_lower for word in ['not interested', 'not intersted', 'not intrested', 'no', 'cant', 'cannot', 'refuse', 'sorry'])
+
+        # Extract any mentioned number (for delivery days request)
+        numbers = re.findall(r'\b(\d+)\s*days?\b', msg_lower)
+        requested_days = int(numbers[0]) if numbers else None
+
+        # If asking for confirmation of price - confirm it
+        if asking_confirmation and 'delivery' not in msg_lower:
+            if last_offer and quantity > 0:
+                last_discount = last_offer.get('discount', 0)
+                return f"Yes, {last_discount}% off for {quantity} units is our final offer at this volume. Total: ${total_price:,.0f}."
+            else:
+                return f"Yes, {discount_pct}% is correct for {quantity} units. That brings your total to ${total_price:,.0f}."
+
+        # If requesting custom delivery time
+        if requesting_custom_delivery and requested_days:
+            if requested_days < lead_time:
+                # Customer wants faster than standard
+                expedited_days = lead_time - 2
+                if requested_days < expedited_days:
+                    # Want even faster than expedited - need special handling
+                    surcharge = int((lead_time - requested_days) * 5)  # $5 per day expediting fee
+                    return f"A {requested_days}-day delivery is aggressive for {quantity} units. I can arrange it for a {surcharge}% surcharge on top of the current pricing."
+                else:
+                    # Fits within expedited
+                    return f"We can accommodate {requested_days} days delivery with our expedited service at a small premium."
+            else:
+                # Standard or slower is fine
+                return f"{requested_days} days works - that's within our standard {lead_time}-day timeline."
 
         # If asking about delivery/timeline - answer that question
         if asking_delivery and 'price' not in msg_lower and 'discount' not in msg_lower and 'cost' not in msg_lower:
             if quantity > 0:
-                return f"For {quantity} units, we can deliver in {lead_time} days standard, or {lead_time - 2} days expedited for a small fee."
+                return f"For {quantity} units, we offer {lead_time} days standard lead time, or {lead_time - 2} days expedited. What timeline works for you?"
             else:
                 return f"Our standard lead time is {lead_time} days for most orders."
 
