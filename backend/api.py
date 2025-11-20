@@ -270,8 +270,24 @@ async def start_negotiation(request: ChatRequest):
     Returns vendor's opening position.
     """
     try:
+        # Validate LLM provider and API key
+        if request.llm_provider.lower() == "openai":
+            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
+            if not api_key_to_use:
+                raise HTTPException(
+                    status_code=400,
+                    detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
+                )
+
         # Initialize agent with LLM provider and API key
         agent = NegotiationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+
+        # Check if LLM initialization failed
+        if agent.llm is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to initialize LLM provider. Please check API key."
+            )
 
         # Start negotiation
         result = agent.start_negotiation(
@@ -280,6 +296,8 @@ async def start_negotiation(request: ChatRequest):
         )
 
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Negotiation failed: {str(e)}")
 
@@ -292,8 +310,24 @@ async def negotiate_chat(request: ChatRequest):
     User can make offers and negotiate terms with the vendor.
     """
     try:
+        # Validate LLM provider and API key
+        if request.llm_provider.lower() == "openai":
+            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
+            if not api_key_to_use:
+                raise HTTPException(
+                    status_code=400,
+                    detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
+                )
+
         # Initialize agent
         agent = NegotiationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+
+        # Check if LLM initialization failed
+        if agent.llm is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to initialize LLM provider. Please check API key."
+            )
 
         # Set context from conversation
         if request.conversation:
@@ -307,8 +341,10 @@ async def negotiate_chat(request: ChatRequest):
         )
 
         return response
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Negotiation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Negotiation chat failed: {str(e)}")
 
 
 @app.post("/api/cost-optimize/start")
@@ -319,8 +355,24 @@ async def start_cost_optimization(request: ChatRequest):
     Returns initial cost analysis and savings recommendations.
     """
     try:
+        # Validate LLM provider and API key
+        if request.llm_provider.lower() == "openai":
+            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
+            if not api_key_to_use:
+                raise HTTPException(
+                    status_code=400,
+                    detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
+                )
+
         # Initialize agent with LLM provider and API key
         agent = CostOptimizationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+
+        # Check if LLM initialization failed
+        if agent.llm is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to initialize LLM provider. Please check API key."
+            )
 
         # Get initial analysis
         result = agent.analyze_costs(
@@ -329,6 +381,8 @@ async def start_cost_optimization(request: ChatRequest):
         )
 
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Cost optimization failed: {str(e)}")
 
@@ -341,8 +395,24 @@ async def cost_optimize_chat(request: ChatRequest):
     User can ask specific questions about cost optimization strategies.
     """
     try:
+        # Validate LLM provider and API key
+        if request.llm_provider.lower() == "openai":
+            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
+            if not api_key_to_use:
+                raise HTTPException(
+                    status_code=400,
+                    detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
+                )
+
         # Initialize agent
         agent = CostOptimizationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+
+        # Check if LLM initialization failed
+        if agent.llm is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to initialize LLM provider. Please check API key."
+            )
 
         # Get agent response with full context
         response = agent.chat(
@@ -353,6 +423,8 @@ async def cost_optimize_chat(request: ChatRequest):
         )
 
         return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Cost optimization chat failed: {str(e)}")
 

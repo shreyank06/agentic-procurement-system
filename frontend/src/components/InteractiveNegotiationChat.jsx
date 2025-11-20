@@ -41,7 +41,15 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
       console.log('Negotiation response:', response.data)
       setConversation(response.data.conversation)
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || err.message || 'Unknown error'
+      let errorMsg = 'Unknown error'
+
+      if (err.response?.data) {
+        const detail = err.response.data.detail
+        errorMsg = typeof detail === 'string' ? detail : JSON.stringify(detail)
+      } else if (err.message) {
+        errorMsg = err.message
+      }
+
       console.error('Negotiation error:', errorMsg, err)
       setError(`Error: ${errorMsg}`)
     } finally {
@@ -77,7 +85,17 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
         timestamp: response.data.timestamp
       }])
     } catch (err) {
-      setError(err.response?.data?.detail || err.message)
+      let errorMsg = 'Unknown error'
+
+      if (err.response?.data) {
+        const detail = err.response.data.detail
+        errorMsg = typeof detail === 'string' ? detail : JSON.stringify(detail)
+      } else if (err.message) {
+        errorMsg = err.message
+      }
+
+      console.error('Negotiation chat error:', errorMsg, err)
+      setError(`Error: ${errorMsg}`)
     } finally {
       setLoading(false)
     }
