@@ -7,8 +7,8 @@ Tests for bonus features:
 """
 
 import pytest
-from catalog import Catalog
-from procurement import plan_procurement, negotiate_procurement, price_history_tool, availability_tool
+from backend.core.catalog import Catalog
+from backend.core.procurement import plan_procurement, negotiate_procurement, price_history_tool, availability_tool
 from extension_endpoint import MockVendorEndpoint, apply_vendor_constraints, get_endpoint
 
 

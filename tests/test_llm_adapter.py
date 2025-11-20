@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, Mock
-from llm_adapter import LLMAdapter, MockLLM
+from backend.core.llm_adapter import LLMAdapter, MockLLM
 
 class TestLLMAdapter(unittest.TestCase):
 

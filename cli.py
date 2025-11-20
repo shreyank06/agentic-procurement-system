@@ -12,7 +12,7 @@ Example:
 import sys
 import json
 import argparse
-from procurement import plan_procurement, negotiate_procurement
+from backend.core.procurement import plan_procurement, negotiate_procurement
 from extension_endpoint import apply_vendor_constraints
 
 

@@ -1,5 +1,5 @@
 import unittest
-from catalog import Catalog  # Assuming catalog.py is the file where Catalog class is defined
+from backend.core.catalog import Catalog  # Assuming catalog.py is the file where Catalog class is defined
 
 
 class TestCatalog(unittest.TestCase):

@@ -1,8 +1,8 @@
 # tests/test_procurement.py
 import pytest
-from catalog import Catalog
-from procurement import compute_score, plan_procurement, price_history_tool, availability_tool, run_flow
-from llm_adapter import LLMAdapter, MockLLM
+from backend.core.catalog import Catalog
+from backend.core.procurement import compute_score, plan_procurement, price_history_tool, availability_tool, run_flow
+from backend.core.llm_adapter import LLMAdapter, MockLLM
 
 def test_catalog_search_and_get():
     # Test Catalog search and get methods
