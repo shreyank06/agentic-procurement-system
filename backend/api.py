@@ -39,9 +39,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load catalog at startup
+# Load catalog at startup with embeddings enabled
+import os
 catalog_path = Path(__file__).parent.parent / "catalog.json"
-catalog = Catalog(str(catalog_path))
+enable_embeddings = os.getenv("ENABLE_EMBEDDINGS", "true").lower() == "true"
+openai_key = os.getenv("OPENAI_API_KEY")
+catalog = Catalog(str(catalog_path), enable_embeddings=enable_embeddings, api_key=openai_key)
 
 
 # ============================================================================
@@ -287,8 +290,12 @@ async def start_negotiation(request: AnalysisRequest):
                     detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
                 )
 
-        # Initialize agent with LLM provider and API key
-        agent = NegotiationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+        # Initialize agent with LLM provider, API key, and catalog for semantic search
+        agent = NegotiationAgent(
+            llm_provider=request.llm_provider,
+            api_key=request.api_key,
+            catalog=catalog
+        )
 
         # Check if LLM initialization failed
         if agent.llm is None:
@@ -302,6 +309,11 @@ async def start_negotiation(request: AnalysisRequest):
             selected_item=request.selected_item,
             request=request.request
         )
+
+        # Find competing products using semantic search
+        competitors = agent.find_competing_products()
+        if competitors:
+            result["competitors"] = competitors
 
         return result
     except HTTPException:
@@ -327,8 +339,12 @@ async def negotiate_chat(request: ChatRequest):
                     detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
                 )
 
-        # Initialize agent
-        agent = NegotiationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+        # Initialize agent with catalog for semantic search
+        agent = NegotiationAgent(
+            llm_provider=request.llm_provider,
+            api_key=request.api_key,
+            catalog=catalog
+        )
 
         # Check if LLM initialization failed
         if agent.llm is None:
@@ -358,7 +374,7 @@ async def negotiate_chat(request: ChatRequest):
 @app.post("/api/cost-optimize/start")
 async def start_cost_optimization(request: AnalysisRequest):
     """
-    Start cost optimization analysis.
+    Start cost optimization analysis with semantic search for alternatives.
 
     Returns initial cost analysis and savings recommendations.
     """
@@ -372,8 +388,12 @@ async def start_cost_optimization(request: AnalysisRequest):
                     detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
                 )
 
-        # Initialize agent with LLM provider and API key
-        agent = CostOptimizationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+        # Initialize agent with LLM provider, API key, and catalog for semantic search
+        agent = CostOptimizationAgent(
+            llm_provider=request.llm_provider,
+            api_key=request.api_key,
+            catalog=catalog
+        )
 
         # Check if LLM initialization failed
         if agent.llm is None:
@@ -387,6 +407,11 @@ async def start_cost_optimization(request: AnalysisRequest):
             selected_item=request.selected_item,
             request=request.request
         )
+
+        # Find cheaper alternatives using semantic search
+        alternatives = agent.find_cheaper_alternatives(request.selected_item)
+        if alternatives:
+            result["alternatives"] = alternatives
 
         return result
     except HTTPException:
@@ -412,8 +437,12 @@ async def cost_optimize_chat(request: ChatRequest):
                     detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
                 )
 
-        # Initialize agent
-        agent = CostOptimizationAgent(llm_provider=request.llm_provider, api_key=request.api_key)
+        # Initialize agent with catalog for semantic search
+        agent = CostOptimizationAgent(
+            llm_provider=request.llm_provider,
+            api_key=request.api_key,
+            catalog=catalog
+        )
 
         # Check if LLM initialization failed
         if agent.llm is None:

@@ -11,7 +11,8 @@ Key exports:
 
 import json
 import hashlib
-from typing import List, Set, Dict, Union
+from typing import List, Set, Dict, Union, Optional
+from embeddings import EmbeddingManager
 
 
 class Catalog:
@@ -22,15 +23,26 @@ class Catalog:
     mission hardware components from vendors.
     """
 
-    def __init__(self, catalog_path: str):
+    def __init__(self, catalog_path: str, enable_embeddings: bool = True, api_key: Optional[str] = None):
         """
         Load catalog from JSON file.
 
         Args:
             catalog_path: Path to the catalog JSON file
+            enable_embeddings: Whether to enable vector embeddings
+            api_key: Optional OpenAI API key for embeddings
         """
         with open(catalog_path, 'r') as f:
             self.items = json.load(f)
+
+        self.embedding_manager = None
+        if enable_embeddings:
+            try:
+                self.embedding_manager = EmbeddingManager(api_key=api_key)
+                # Generate embeddings for all items if not cached
+                self.items = self.embedding_manager.embed_items(self.items)
+            except Exception as e:
+                print(f"Warning: Could not initialize embeddings: {e}")
 
     def search(self, component: str, spec_filters: Dict[str, Union[int, float]] = None) -> List[Dict]:
         """
@@ -138,7 +150,7 @@ class Catalog:
 
     def search_semantic(self, query: str, top_k: int = 5) -> List[Dict]:
         """
-        Semantic search using deterministic embeddings.
+        Semantic search using embeddings.
 
         Args:
             query: Free-text search query
@@ -147,6 +159,12 @@ class Catalog:
         Returns:
             List of items sorted by semantic similarity
         """
+        # Use embedding manager if available
+        if self.embedding_manager:
+            results = self.embedding_manager.semantic_search(query, self.items, top_k=top_k)
+            return [item for item, score in results]
+
+        # Fallback to deterministic hash-based embeddings
         query_embedding = self._text_to_embedding(query)
         scored_items = []
 
@@ -162,3 +180,47 @@ class Catalog:
 
         scored_items.sort(key=lambda x: x[0], reverse=True)
         return [item for score, item in scored_items[:top_k]]
+
+    def find_similar_items(self, item: Dict, top_k: int = 5) -> List[Dict]:
+        """Find items similar to a given item using semantic embeddings.
+
+        Args:
+            item: Reference item
+            top_k: Number of similar items to return
+
+        Returns:
+            List of similar items
+        """
+        if not self.embedding_manager or 'embedding' not in item:
+            return []
+
+        results = self.embedding_manager.find_similar_items(item, self.items, top_k=top_k)
+        return [s_item for s_item, score in results]
+
+    def find_cheaper_alternatives(self, item: Dict) -> List[Dict]:
+        """Find semantically similar items that are cheaper.
+
+        Args:
+            item: Reference item
+
+        Returns:
+            List of cheaper alternatives
+        """
+        if not self.embedding_manager or 'embedding' not in item:
+            return []
+
+        return self.embedding_manager.find_cheaper_alternatives(item, self.items)
+
+    def find_competing_products(self, item: Dict) -> List[Dict]:
+        """Find competing products from different vendors.
+
+        Args:
+            item: Reference item
+
+        Returns:
+            List of competing products
+        """
+        if not self.embedding_manager or 'embedding' not in item:
+            return []
+
+        return self.embedding_manager.find_competing_products(item, self.items)

@@ -11,14 +11,21 @@ from llm_adapter import select_llm_provider
 
 
 class CostOptimizationAgent:
-    """Single LLM-powered agent for cost optimization analysis."""
+    """Single LLM-powered agent for cost optimization analysis with semantic search."""
 
-    def __init__(self, llm_provider: str = "mock", api_key: str = None):
-        """Initialize the cost optimization agent."""
+    def __init__(self, llm_provider: str = "mock", api_key: str = None, catalog=None):
+        """Initialize the cost optimization agent.
+
+        Args:
+            llm_provider: LLM provider to use
+            api_key: API key for LLM provider
+            catalog: Catalog instance for semantic search and alternatives
+        """
         self.llm_provider = llm_provider
         self.api_key = api_key
         self.llm = select_llm_provider(llm_provider, api_key)
         self.conversation_history = []
+        self.catalog = catalog
 
     def analyze_costs(self, selected_item: Dict, request: Dict) -> Dict:
         """
@@ -163,3 +170,18 @@ No lengthy explanations."""
             "cost_after_optimization": round(item_price * 0.50, 2),
             "savings_percentage": 50
         }
+
+    def find_cheaper_alternatives(self, selected_item: Dict) -> List[Dict]:
+        """Find semantically similar items that are cheaper using catalog.
+
+        Args:
+            selected_item: The selected component
+
+        Returns:
+            List of cheaper alternatives
+        """
+        if not self.catalog:
+            return []
+
+        alternatives = self.catalog.find_cheaper_alternatives(selected_item)
+        return alternatives[:3]  # Top 3 alternatives

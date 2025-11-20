@@ -11,14 +11,21 @@ from llm_adapter import select_llm_provider
 
 
 class NegotiationAgent:
-    """Single LLM-powered agent representing vendor in negotiations."""
+    """Single LLM-powered agent representing vendor in negotiations with semantic awareness."""
 
-    def __init__(self, llm_provider: str = "mock", api_key: str = None):
-        """Initialize the negotiation agent as a vendor."""
+    def __init__(self, llm_provider: str = "mock", api_key: str = None, catalog=None):
+        """Initialize the negotiation agent as a vendor.
+
+        Args:
+            llm_provider: LLM provider to use
+            api_key: API key for LLM provider
+            catalog: Catalog instance for finding competitive alternatives
+        """
         self.llm_provider = llm_provider
         self.api_key = api_key
         self.llm = select_llm_provider(llm_provider, api_key)
         self.selected_item = None
+        self.catalog = catalog
         self.negotiation_state = {
             "discount_offered": 0,
             "delivery_adjusted": False,
@@ -255,3 +262,15 @@ Simply state the price, what makes this a good product, and ONE condition for be
             context_lines.append(f"{role}: {message}")
         # Include full conversation history to ensure consistency
         return "\n".join(context_lines)
+
+    def find_competing_products(self) -> List[Dict]:
+        """Find competing products from other vendors using semantic search.
+
+        Returns:
+            List of competing products
+        """
+        if not self.catalog or not self.selected_item:
+            return []
+
+        competitors = self.catalog.find_competing_products(self.selected_item)
+        return competitors[:3]  # Top 3 competitors
