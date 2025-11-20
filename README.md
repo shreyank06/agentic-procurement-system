@@ -564,14 +564,102 @@ hardware-procurement-agent-wpvuer/
 └── README.md                          # This file
 ```
 
+## Tech Stack & Concepts
+
+### Backend Technologies
+- **FastAPI** - Modern Python web framework for building REST APIs
+- **Python 3.8+** - Core programming language
+- **Pydantic** - Data validation and serialization
+- **OpenAI API** - LLM integration for natural language generation and analysis
+- **NumPy** - Numerical computations for scoring algorithms
+- **Pytest** - Testing framework with comprehensive test coverage
+
+### Frontend Technologies
+- **React 18** - UI library for interactive components
+- **Vite** - Fast build tool and development server
+- **Tailwind CSS** - Utility-first CSS for styling
+- **Axios** - HTTP client for API communication
+- **JavaScript ES6+** - Modern JavaScript features
+
+### Key Concepts & Algorithms
+
+#### 1. **Multi-Criteria Decision Making (MCDM)**
+- Weighted scoring algorithm that balances three criteria:
+  - Price normalization: `1 - (price - min) / (max - min)`
+  - Lead time normalization: `1 - (lead_time - min) / (max - min)`
+  - Reliability score: Used directly (0-1 scale)
+- Final score: `w_price × norm_price + w_lead × norm_lead + w_reliability × reliability`
+- Default weights: price=0.4, lead_time=0.3, reliability=0.3 (customizable)
+
+#### 2. **Semantic Search & Vector Embeddings**
+- **Vector Embeddings**: Convert text descriptions to numerical vectors using OpenAI's embedding model
+- **Cosine Similarity**: Measures semantic similarity between component descriptions and search queries
+- **Approximate Nearest Neighbors**: Fast retrieval of similar products
+- **Use Case**: Find competitive alternatives and similar products based on meaning, not just keywords
+- **Example**: Query "solar power" finds both "solar panel" and "photovoltaic module"
+- **Caching**: Embeddings cached locally to avoid redundant API calls
+
+#### 3. **LLM Integration & Prompting**
+- **Pluggable LLM Adapter**: Abstracts LLM provider implementation
+- **OpenAI API Integration**: GPT-3.5/GPT-4 for justifications and vendor responses
+- **Deterministic Mock LLM**: Hash-based responses for testing without API calls
+- **Prompt Engineering**: Carefully crafted prompts for consistent, structured responses
+- **Token Optimization**: Max tokens limited to keep responses concise and costs low
+
+#### 4. **Agent-Based Architecture**
+- **BaseAgent**: Abstract class defining agent interface
+- **NegotiationAgent**: Vendor negotiation with stateful conversation tracking
+- **CostOptimizationAgent**: Cost analysis and savings recommendations
+- **State Management**: Session-based persistence across chat messages
+- **Agent Orchestration**: Coordination between multiple agents in procurement workflow
+
+#### 5. **Session Management & State Persistence**
+- **In-Memory Sessions**: Dictionary of agent instances keyed by session ID
+- **UUID Generation**: Unique identifiers for each negotiation session
+- **Stateful Conversations**: Agent maintains confirmation_asked, order_confirmed, and negotiated terms
+- **Session Lifecycle**: Sessions persist across multiple API calls for seamless negotiations
+
+#### 6. **Agentic Orchestration**
+- **Workflow Steps**: Catalog search → Scoring → Investigation → Justification → Selection
+- **Tool Calling**: Deterministic tools (price_history, availability) that simulate research
+- **LangGraph Support**: Optional graph-based orchestration with automatic fallback
+- **Execution Tracing**: Every step logged with latency and status for audit trail
+
+#### 7. **Deterministic Testing Tools**
+- **Price History Tool**: Hash-based deterministic pricing data generation
+- **Availability Tool**: Vendor availability metrics based on hash of vendor name
+- **Offline-First**: All tools work without external API calls
+- **Reproducible**: Same input always produces same output for testing
+
+### Deployment & DevOps
+- **Docker** - Container orchestration
+- **Docker Compose** - Multi-container application management
+- **Environment Variables** - Configuration management
+- **CORS** - Cross-Origin Resource Sharing for frontend-backend communication
+- **Uvicorn** - ASGI server for FastAPI application
+
+### Development & Testing
+- **Pytest** - Comprehensive unit and integration tests
+- **Mock Objects** - Simulated LLM and vendor responses for testing
+- **Test Coverage** - 49+ test cases covering all major features
+- **Deterministic Tests** - No random behavior, all tests reproducible
+
+### Advanced Features
+- **Performance Metrics** - Step-by-step timing with nanosecond precision
+- **Execution Traces** - Complete decision audit trail in JSON format
+- **Error Handling** - Graceful fallbacks and comprehensive validation
+- **Logging** - Structured logging for debugging and monitoring
+
 ## Design Principles
 
-- **Modularity**: Clear separation of concerns across components
-- **Testability**: Comprehensive unit tests with deterministic behavior
-- **Extensibility**: Pluggable LLM adapters and tool interfaces
-- **Observability**: Full execution tracing and metrics
-- **Robustness**: Error handling and input validation throughout
-- **Offline-First**: All core functionality works without network access
+- **Modularity**: Clear separation of concerns across components (core, services, agents)
+- **Testability**: Comprehensive unit tests with deterministic behavior for reproducibility
+- **Extensibility**: Pluggable LLM adapters and tool interfaces for easy integration
+- **Observability**: Full execution tracing and metrics for decision audit trails
+- **Robustness**: Error handling, validation, and graceful degradation throughout
+- **Offline-First**: All core functionality works without network access (mock LLM fallback)
+- **Session-Based**: Stateful agent management for seamless multi-turn conversations
+- **Semantic-Aware**: Vector embeddings for intelligent product comparison and discovery
 
 ## Contributing
 
