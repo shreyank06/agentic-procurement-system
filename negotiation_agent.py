@@ -29,7 +29,9 @@ class NegotiationAgent:
         self.negotiation_state = {
             "discount_offered": 0,
             "delivery_adjusted": False,
-            "bulk_commitment": False
+            "bulk_commitment": False,
+            "confirmation_asked": False,
+            "order_confirmed": False
         }
 
     def start_negotiation(self, selected_item: Dict, request: Dict) -> Dict:
@@ -74,9 +76,36 @@ class NegotiationAgent:
             request: Original procurement request (for context)
 
         Returns:
-            Vendor's response
+            Vendor's response with order confirmation workflow
         """
         start_time = time.time()
+        import re
+
+        # Check if user is confirming or rejecting order
+        msg_lower = user_message.lower()
+
+        # If order was confirmed, submit it
+        if self.negotiation_state.get("confirmation_asked"):
+            if any(word in msg_lower for word in ['yes', 'confirm', 'accept', 'proceed', 'go ahead', 'submit']):
+                self.negotiation_state["order_confirmed"] = True
+                return {
+                    "role": "vendor",
+                    "message": f"Perfect! Order confirmed. Your order for {self.selected_item.get('id')} has been submitted. You will receive a confirmation email shortly.",
+                    "timestamp": time.time(),
+                    "latency": time.time() - start_time,
+                    "order_status": "confirmed",
+                    "order_details": self._get_order_details()
+                }
+            elif any(word in msg_lower for word in ['no', 'cancel', 'wait', 'hold', 'reconsider', "don't"]):
+                # Reset confirmation state, wait for user input
+                self.negotiation_state["confirmation_asked"] = False
+                return {
+                    "role": "vendor",
+                    "message": "Understood. No problem - what would you like to adjust or discuss further?",
+                    "timestamp": time.time(),
+                    "latency": time.time() - start_time,
+                    "order_status": "waiting"
+                }
 
         # Build context from conversation
         context = self._build_negotiation_context(conversation)
@@ -92,11 +121,20 @@ class NegotiationAgent:
         # Generate response using LLM
         response = self.llm.generate(prompt, max_tokens=200)
 
+        # Add order confirmation request at the end of vendor response
+        confirmation_request = self._build_confirmation_request()
+        final_response = f"{response}\n\n{confirmation_request}"
+
+        # Mark confirmation as asked
+        self.negotiation_state["confirmation_asked"] = True
+
         result = {
             "role": "vendor",
-            "message": response,
+            "message": final_response,
             "timestamp": time.time(),
-            "latency": time.time() - start_time
+            "latency": time.time() - start_time,
+            "order_status": "negotiating",
+            "order_details": self._get_order_details()
         }
 
         return result
@@ -167,6 +205,44 @@ Simply state the price, what makes this a good product, and ONE condition for be
             context_lines.append(f"{role}: {message}")
         # Include full conversation history to ensure consistency
         return "\n".join(context_lines)
+
+    def _build_confirmation_request(self) -> str:
+        """Build order confirmation request with pricing and delivery details."""
+        if not self.selected_item:
+            return "Would you like to confirm this order?"
+
+        item = self.selected_item
+        price = item.get('price', 'N/A')
+        lead_time = item.get('lead_time_days', 'N/A')
+        item_id = item.get('id', 'N/A')
+
+        confirmation_text = f"""
+---
+Would you like to confirm your order?
+
+📋 Order Summary:
+• Item: {item_id}
+• Unit Price: ${price}
+• Lead Time: {lead_time} days
+• Reliability: {item.get('reliability', 'N/A')}
+
+Please confirm (YES) or make adjustments (NO)"""
+        return confirmation_text
+
+    def _get_order_details(self) -> Dict:
+        """Get current order details with pricing and delivery terms."""
+        if not self.selected_item:
+            return {}
+
+        item = self.selected_item
+        return {
+            "item_id": item.get('id'),
+            "vendor": item.get('vendor'),
+            "unit_price": item.get('price'),
+            "lead_time_days": item.get('lead_time_days'),
+            "reliability": item.get('reliability'),
+            "order_confirmed": self.negotiation_state.get("order_confirmed", False)
+        }
 
     def find_competing_products(self) -> List[Dict]:
         """Find competing products from other vendors using semantic search.
