@@ -40,7 +40,7 @@ class NegotiationAgent:
         start_time = time.time()
 
         prompt = self._build_opening_prompt(selected_item, request)
-        vendor_opening = self.llm.generate(prompt, max_tokens=300)
+        vendor_opening = self.llm.generate(prompt, max_tokens=200)
 
         result = {
             "selected_item": selected_item,
@@ -82,31 +82,13 @@ Buyer's Budget Constraints:
 - Delivery Deadline: {request.get('latest_delivery_days', 'Not specified')} days
 """
 
-        prompt = f"""You are a vendor representative from {self.selected_item.get('vendor')} negotiating with a buyer.
+        prompt = f"""You are vendor from {self.selected_item.get('vendor')} negotiating {self.selected_item.get('id')} sale. Current price: ${self.selected_item.get('price')}.
 
-Product Being Negotiated:
-- Item: {self.selected_item.get('id')}
-- Current Price: ${self.selected_item.get('price')}
-- Current Lead Time: {self.selected_item.get('lead_time_days')} days
-- Reliability: {self.selected_item.get('reliability')}
-{budget_info}
+Buyer said: {user_message}
 
-Negotiation History:
-{context}
+Respond in 2-3 sentences with a specific offer (discount %, volume requirements, or delivery change). Be realistic: max 20% discount, require volume for bigger cuts."""
 
-Buyer's Latest Message: {user_message}
-
-As the vendor, respond professionally and strategically. Consider:
-- Discounts you can offer (be realistic: 5-20% maximum)
-- Volume/commitment requirements for better pricing
-- Delivery time adjustments
-- Bundle opportunities with other products
-- Long-term partnership benefits
-
-Match their tone - if they're being aggressive, hold firm but remain professional. If they're collaborative, be accommodating.
-Keep response concise and specific with numbers/terms."""
-
-        response = self.llm.generate(prompt, max_tokens=400)
+        response = self.llm.generate(prompt, max_tokens=200)
 
         result = {
             "role": "vendor",
@@ -124,25 +106,11 @@ Keep response concise and specific with numbers/terms."""
         price = selected_item.get("price")
         lead_time = selected_item.get("lead_time_days")
 
-        prompt = f"""You are a vendor representative from {vendor}. A buyer is interested in purchasing {item_id} from us.
+        prompt = f"""You are a vendor rep from {vendor} negotiating {item_id} sale.
+Item: ${price}, {lead_time} day lead time, 0.975 reliability.
+Buyer's budget: ${request.get('max_cost', 'flexible')}
 
-Item Details:
-- ID: {item_id}
-- Price: ${price}
-- Lead Time: {lead_time} days
-- Reliability: {selected_item.get('reliability')}
-
-The buyer's requirements:
-- Max budget: ${request.get('max_cost', 'Not specified')}
-- Delivery deadline: {request.get('latest_delivery_days', 'Not specified')} days
-
-Provide a professional opening position. Include:
-1. Your current pricing and terms
-2. What you can offer in terms of flexibility
-3. What you'd need to improve your terms (volume, commitment, etc.)
-4. Your value proposition
-
-Be professional, confident, and open to negotiation."""
+Give a SHORT opening position (2-3 sentences). Mention current price, one flexibility option, and what would help you offer better terms."""
 
         return prompt
 

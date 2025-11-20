@@ -37,7 +37,7 @@ class CostOptimizationAgent:
         prompt = self._build_analysis_prompt(selected_item, request)
 
         # Get initial analysis from LLM
-        analysis = self.llm.generate(prompt, max_tokens=500)
+        analysis = self.llm.generate(prompt, max_tokens=300)
 
         # Calculate estimated savings
         savings = self._calculate_savings(selected_item)
@@ -90,29 +90,19 @@ Selected Item Context:
 """
 
         # Create response prompt
-        prompt = f"""You are an expert cost optimization analyst. Analyze the following situation and provide specific, actionable advice.
+        prompt = f"""You are a cost optimization analyst. Answer this question CONCISELY in 2-3 sentences.
 
 {item_context}
 
-Original Request Budget: ${request.get('max_cost', 'Not specified') if request else 'Not specified'}
-Delivery Deadline: {request.get('latest_delivery_days', 'Not specified') if request else 'Not specified'} days
-
-Conversation History:
+Previous Discussion:
 {context}
 
-User's Latest Question: {user_message}
+User's Question: {user_message}
 
-Provide a direct, specific answer to their question. Focus on:
-1. Concrete cost reduction strategies (percentages and amounts when possible)
-2. Vendor negotiation tactics they can use
-3. Specification compromises they could consider
-4. Volume/commitment benefits
-5. Timeline flexibility benefits
-
-Be practical and realistic. If they ask about quality-cost tradeoffs, explain the specific quality impacts."""
+Provide a SHORT, direct answer with specific numbers if applicable. No lengthy explanations."""
 
         # Get response from LLM
-        response = self.llm.generate(prompt, max_tokens=500)
+        response = self.llm.generate(prompt, max_tokens=250)
 
         result = {
             "role": "agent",
@@ -131,7 +121,7 @@ Be practical and realistic. If they ask about quality-cost tradeoffs, explain th
         lead_time = selected_item.get("lead_time_days", 0)
         specs = json.dumps(selected_item.get("specs", {}), indent=2)
 
-        prompt = f"""You are a cost optimization analyst. Analyze the following selected procurement and provide comprehensive cost optimization strategies.
+        prompt = f"""You are a cost optimization analyst. Provide CONCISE cost optimization strategies for this procurement.
 
 Selected Item:
 - ID: {selected_item.get('id')}
@@ -140,21 +130,8 @@ Selected Item:
 - Price: ${item_price}
 - Lead Time: {lead_time} days
 - Reliability: {selected_item.get('reliability', 0.0)}
-- Specifications: {specs}
 
-Original Request:
-- Max Cost: ${request.get('max_cost', 'Not specified')}
-- Delivery Deadline: {request.get('latest_delivery_days', 'Not specified')} days
-
-Please provide:
-1. Specific cost reduction opportunities (target 20-40% savings)
-2. Vendor negotiation strategies
-3. Specification relaxation possibilities
-4. Bulk ordering and long-term contract benefits
-5. Logistics and delivery optimization
-6. Estimated total savings percentage
-
-Be specific and actionable."""
+REQUEST: Provide a SHORT list (max 5 points) of actionable cost reduction strategies. Be direct and specific with numbers. No lengthy explanations."""
 
         return prompt
 
