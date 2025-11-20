@@ -8,6 +8,8 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [userMessage, setUserMessage] = useState('')
+  const [orderConfirmed, setOrderConfirmed] = useState(false)
+  const [receipt, setReceipt] = useState(null)
   const messagesEndRef = useRef(null)
 
   // Start negotiation on mount
@@ -84,6 +86,12 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
         message: response.data.message,
         timestamp: response.data.timestamp
       }])
+
+      // Check if order was confirmed
+      if (response.data.order_status === 'confirmed') {
+        setOrderConfirmed(true)
+        setReceipt(response.data.receipt)
+      }
     } catch (err) {
       let errorMsg = 'Unknown error'
 
@@ -184,24 +192,110 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Receipt Display */}
+      {orderConfirmed && receipt && (
+        <div className="bg-gradient-to-b from-green-50 to-green-100 border-2 border-green-500 rounded-lg p-6 mb-4 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">✓</span>
+              <div>
+                <h3 className="text-2xl font-bold text-green-900">Order Confirmed!</h3>
+                <p className="text-sm text-green-700">Order #{receipt.order_number}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg p-4 space-y-3 mb-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">Item</p>
+                <p className="text-lg font-bold text-gray-900">{receipt.item_id}</p>
+                <p className="text-sm text-gray-600">{receipt.vendor}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">Quantity</p>
+                <p className="text-lg font-bold text-gray-900">{receipt.quantity} unit{receipt.quantity > 1 ? 's' : ''}</p>
+              </div>
+            </div>
+
+            <hr className="border-gray-200" />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">Unit Price</p>
+                <p className="text-lg font-bold text-blue-600">${receipt.unit_price.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">Total Price</p>
+                <p className="text-lg font-bold text-green-600">${receipt.total_price.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <hr className="border-gray-200" />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">Lead Time</p>
+                <p className="text-lg font-bold text-gray-900">{receipt.lead_time_days} days</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">Estimated Delivery</p>
+                <p className="text-lg font-bold text-gray-900">{receipt.estimated_delivery}</p>
+              </div>
+            </div>
+
+            <hr className="border-gray-200" />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">Order Date</p>
+                <p className="text-sm text-gray-700">{receipt.order_date}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">Reliability</p>
+                <p className="text-sm text-gray-700">{(receipt.reliability * 100).toFixed(0)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-green-100 border border-green-400 rounded-lg p-3 text-sm text-green-800">
+            <p className="font-semibold">✓ Order successfully submitted!</p>
+            <p className="mt-1">A confirmation email will be sent to you shortly with all order details.</p>
+          </div>
+        </div>
+      )}
+
       {/* Input Area */}
-      <form onSubmit={sendMessage} className="flex gap-2 pt-4 border-t border-gray-200">
-        <input
-          type="text"
-          value={userMessage}
-          onChange={(e) => setUserMessage(e.target.value)}
-          placeholder="Make an offer or ask a question..."
-          disabled={loading}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 bg-white"
-        />
-        <button
-          type="submit"
-          disabled={loading || !userMessage.trim()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
-        >
-          Send
-        </button>
-      </form>
+      {!orderConfirmed && (
+        <form onSubmit={sendMessage} className="flex gap-2 pt-4 border-t border-gray-200">
+          <input
+            type="text"
+            value={userMessage}
+            onChange={(e) => setUserMessage(e.target.value)}
+            placeholder="Make an offer or ask a question..."
+            disabled={loading}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 bg-white"
+          />
+          <button
+            type="submit"
+            disabled={loading || !userMessage.trim()}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
+          >
+            Send
+          </button>
+        </form>
+      )}
+
+      {orderConfirmed && (
+        <div className="pt-4 border-t border-gray-200 text-center">
+          <button
+            onClick={onClose}
+            className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-lg font-semibold transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      )}
     </div>
   )
 }

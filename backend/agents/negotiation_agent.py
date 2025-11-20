@@ -28,7 +28,10 @@ class NegotiationAgent(BaseAgent):
             "delivery_adjusted": False,
             "bulk_commitment": False,
             "confirmation_asked": False,
-            "order_confirmed": False
+            "order_confirmed": False,
+            "final_price": None,
+            "final_lead_time": None,
+            "quantity": None
         }
 
     def process(self, selected_item: Dict, request: Dict) -> Dict:
@@ -103,7 +106,8 @@ class NegotiationAgent(BaseAgent):
                     "timestamp": time.time(),
                     "latency": time.time() - start_time,
                     "order_status": "confirmed",
-                    "order_details": self._get_order_details()
+                    "order_details": self._get_order_details(),
+                    "receipt": self._generate_receipt()
                 }
             elif any(word in msg_lower for word in ['no', 'cancel', 'wait', 'hold', 'reconsider', "don't"]):
                 # Reset confirmation state, wait for user input
@@ -251,6 +255,50 @@ Please confirm (YES) or make adjustments (NO)"""
             "reliability": item.get('reliability'),
             "order_confirmed": self.negotiation_state.get("order_confirmed", False)
         }
+
+    def _generate_receipt(self) -> Dict:
+        """Generate order receipt with confirmed terms.
+
+        Returns:
+            Dict with receipt details
+        """
+        if not self.selected_item:
+            return {}
+
+        item = self.selected_item
+        # Extract any negotiated terms from conversation or use defaults
+        final_price = self.negotiation_state.get("final_price") or item.get('price')
+        final_lead_time = self.negotiation_state.get("final_lead_time") or item.get('lead_time_days')
+        quantity = self.negotiation_state.get("quantity") or 1
+
+        import random
+        order_number = f"ORD-{random.randint(100000, 999999)}"
+
+        return {
+            "order_number": order_number,
+            "item_id": item.get('id'),
+            "vendor": item.get('vendor'),
+            "unit_price": final_price,
+            "quantity": quantity,
+            "total_price": final_price * quantity,
+            "lead_time_days": final_lead_time,
+            "reliability": item.get('reliability'),
+            "order_date": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "estimated_delivery": self._calculate_delivery_date(final_lead_time)
+        }
+
+    def _calculate_delivery_date(self, lead_time_days: int) -> str:
+        """Calculate estimated delivery date.
+
+        Args:
+            lead_time_days: Number of days for delivery
+
+        Returns:
+            Formatted delivery date string
+        """
+        from datetime import datetime, timedelta
+        delivery_date = datetime.now() + timedelta(days=lead_time_days)
+        return delivery_date.strftime("%Y-%m-%d")
 
     def find_competing_products(self) -> List[Dict]:
         """Find competing products from other vendors using semantic search.
