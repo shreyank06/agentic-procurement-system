@@ -157,16 +157,25 @@ class NegotiationAgent:
     def _generate_negotiation_response(self, user_message: str, quantity: int, discount: float, last_offer: dict) -> str:
         """Generate vendor response based on negotiation state."""
         price = self.selected_item.get('price', 5200)
+        lead_time = self.selected_item.get('lead_time_days', 8)
         discount_pct = int(discount * 100)
         discounted_price = price * (1 - discount)
         total_price = discounted_price * quantity if quantity > 0 else discounted_price
 
         msg_lower = user_message.lower()
 
-        # Detect buyer behavior
+        # Detect different types of questions
         wants_more_discount = any(word in msg_lower for word in ['10%', '12%', '15%', 'more', 'higher', 'better', 'increase', 'can you give', 'can you offer'])
-        asking_about_quantity = any(word in msg_lower for word in ['what about', 'for', 'on', '15 units'])
-        refusing = any(word in msg_lower for word in ['no', 'not interested', 'cant', 'cannot', 'doesnt work', 'refuse', 'sorry', 'dont like', 'not acceptable'])
+        asking_delivery = any(word in msg_lower for word in ['how many days', 'delivery', 'how long', 'time', 'days', 'when'])
+        asking_about_quantity = any(word in msg_lower for word in ['what about', 'for', 'on'])
+        refusing = any(word in msg_lower for word in ['not interested', 'not intersted', 'not intrested', 'no', 'cant', 'cannot', 'refuse', 'sorry'])
+
+        # If asking about delivery/timeline - answer that question
+        if asking_delivery and 'price' not in msg_lower and 'discount' not in msg_lower and 'cost' not in msg_lower:
+            if quantity > 0:
+                return f"For {quantity} units, we can deliver in {lead_time} days standard, or {lead_time - 2} days expedited for a small fee."
+            else:
+                return f"Our standard lead time is {lead_time} days for most orders."
 
         # If last offer exists and same quantity, buyer wants more discount
         if last_offer and quantity > 0:
