@@ -82,15 +82,20 @@ Buyer's Budget Constraints:
 - Delivery Deadline: {request.get('latest_delivery_days', 'Not specified')} days
 """
 
-        prompt = f"""You are a vendor negotiating the sale of {self.selected_item.get('id')} at ${self.selected_item.get('price')}/unit.
+        prompt = f"""You are a vendor negotiating {self.selected_item.get('id')} at ${self.selected_item.get('price')}/unit.
 
-Buyer's request: {user_message}
+Buyer said: {user_message}
 
-Respond directly and realistically (2-3 sentences). DO NOT thank them or use excessive politeness. Be firm but fair:
-- For small orders (under 10 units): offer 3-5% discount maximum
-- For medium orders (10-50): offer 5-10% discount
-- Counter with your own conditions if needed (minimum volume, payment terms, etc.)
-Focus on the numbers and terms, not flattery."""
+Previous negotiation context:
+{context}
+
+Respond in 2-3 sentences. Rules:
+1. BE CONSISTENT - if you already stated a discount for this quantity, stick to it
+2. DO NOT contradict previous offers or discounts already mentioned
+3. Be firm: small orders (under 15 units) = max 5% discount; medium (15-50) = max 8-10% discount
+4. If buyer pushes hard, you can slightly increase but acknowledge the change ("Okay, I can improve to...")
+5. NO excessive politeness or thanking
+6. For refusal: state clearly and offer alternative (e.g., "5% is my final offer, or you can order 50+ for 12%")"""
 
         response = self.llm.generate(prompt, max_tokens=200)
 
@@ -119,9 +124,12 @@ Simply state the price, what makes this a good product, and ONE condition for be
         return prompt
 
     def _build_negotiation_context(self, conversation: List[Dict]) -> str:
-        """Build context from negotiation history."""
+        """Build context from negotiation history - include full conversation for consistency."""
         context_lines = []
         for msg in conversation:
             role = "Buyer" if msg.get("role") == "buyer" else "Vendor"
-            context_lines.append(f"{role}: {msg.get('message', '')}")
-        return "\n".join(context_lines[-6:])  # Last 3 exchanges only
+            message = msg.get('message', '')
+            # Extract just the discount/price info to keep it concise
+            context_lines.append(f"{role}: {message}")
+        # Include full conversation history to ensure consistency
+        return "\n".join(context_lines)
