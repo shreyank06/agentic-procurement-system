@@ -82,11 +82,15 @@ Buyer's Budget Constraints:
 - Delivery Deadline: {request.get('latest_delivery_days', 'Not specified')} days
 """
 
-        prompt = f"""You are vendor from {self.selected_item.get('vendor')} negotiating {self.selected_item.get('id')} sale. Current price: ${self.selected_item.get('price')}.
+        prompt = f"""You are a vendor negotiating the sale of {self.selected_item.get('id')} at ${self.selected_item.get('price')}/unit.
 
-Buyer said: {user_message}
+Buyer's request: {user_message}
 
-Respond in 2-3 sentences with a specific offer (discount %, volume requirements, or delivery change). Be realistic: max 20% discount, require volume for bigger cuts."""
+Respond directly and realistically (2-3 sentences). DO NOT thank them or use excessive politeness. Be firm but fair:
+- For small orders (under 10 units): offer 3-5% discount maximum
+- For medium orders (10-50): offer 5-10% discount
+- Counter with your own conditions if needed (minimum volume, payment terms, etc.)
+Focus on the numbers and terms, not flattery."""
 
         response = self.llm.generate(prompt, max_tokens=200)
 
@@ -106,11 +110,11 @@ Respond in 2-3 sentences with a specific offer (discount %, volume requirements,
         price = selected_item.get("price")
         lead_time = selected_item.get("lead_time_days")
 
-        prompt = f"""You are a vendor rep from {vendor} negotiating {item_id} sale.
-Item: ${price}, {lead_time} day lead time, 0.975 reliability.
-Buyer's budget: ${request.get('max_cost', 'flexible')}
+        prompt = f"""You are a vendor rep from {vendor} opening negotiations for {item_id}.
+Current price: ${price}/unit, {lead_time} day lead time, 0.975 reliability.
 
-Give a SHORT opening position (2-3 sentences). Mention current price, one flexibility option, and what would help you offer better terms."""
+State your opening position directly (2-3 sentences). DO NOT use "thank you" or excessive politeness.
+Simply state the price, what makes this a good product, and ONE condition for better pricing (volume, long-term contract, etc.)"""
 
         return prompt
 
