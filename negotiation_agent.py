@@ -95,16 +95,34 @@ class NegotiationAgent:
     def _extract_quantity(self, user_message: str, conversation: List[Dict]) -> int:
         """Extract order quantity from message or conversation."""
         import re
-        # Look for numbers in the current message
-        numbers = re.findall(r'\d+', user_message)
-        if numbers:
-            return int(numbers[0])
 
-        # Look back in conversation for mentioned quantity
+        msg_lower = user_message.lower()
+
+        # Pattern 1: "X units" or "X unit"
+        match = re.search(r'(\d+)\s+units?', msg_lower)
+        if match:
+            return int(match.group(1))
+
+        # Pattern 2: "buy X" or "want X" or "need X" or "order X"
+        match = re.search(r'(?:buy|want|need|order|purchase|commit to)\s+(\d+)', msg_lower)
+        if match:
+            return int(match.group(1))
+
+        # Pattern 3: "for X" when talking about quantity (e.g., "10% for 15 units")
+        match = re.search(r'(?:for|on)\s+(\d+)\s+(?:unit|item)', msg_lower)
+        if match:
+            return int(match.group(1))
+
+        # Pattern 4: Look back in conversation for most recent quantity mention
         for msg in reversed(conversation):
-            numbers = re.findall(r'\d+', msg.get('message', ''))
-            if numbers:
-                return int(numbers[0])
+            msg_text = msg.get('message', '').lower()
+            # Look for "X units" pattern
+            match = re.search(r'(\d+)\s+units?', msg_text)
+            if match:
+                qty = int(match.group(1))
+                # Skip if this looks like a price calculation (more than 5 digits before "units")
+                if qty < 1000:
+                    return qty
 
         return 0
 
@@ -143,33 +161,34 @@ class NegotiationAgent:
         discounted_price = price * (1 - discount)
         total_price = discounted_price * quantity if quantity > 0 else discounted_price
 
+        msg_lower = user_message.lower()
+
         # Detect buyer behavior
-        wants_more = any(word in user_message.lower() for word in ['more', 'higher', 'increase', 'better', 'can you give'])
-        asking_alternative = any(word in user_message.lower() for word in ['alternative', 'option', 'else', 'other'])
-        refusing = any(word in user_message.lower() for word in ['no', 'not interested', 'cant', 'cannot', 'refuse', 'sorry'])
+        wants_more_discount = any(word in msg_lower for word in ['10%', '12%', '15%', 'more', 'higher', 'better', 'increase', 'can you give', 'can you offer'])
+        asking_about_quantity = any(word in msg_lower for word in ['what about', 'for', 'on', '15 units'])
+        refusing = any(word in msg_lower for word in ['no', 'not interested', 'cant', 'cannot', 'doesnt work', 'refuse', 'sorry', 'dont like', 'not acceptable'])
 
-        # If last offer exists and buyer is asking for more
-        if last_offer and wants_more:
+        # If last offer exists and same quantity, buyer wants more discount
+        if last_offer and quantity > 0:
             last_discount = last_offer.get('discount', 0)
-            if last_discount >= discount_pct:
-                # Stick to what we already offered
-                return f"As I stated, {last_discount}% is the best I can offer for {quantity} units, bringing the total to ${total_price:,.0f}. This is firm unless you can commit to a larger volume."
-            else:
-                # Can only marginally improve
-                improved_discount = min(last_discount + 2, discount_pct)
-                improved_price = price * (1 - (improved_discount / 100))
-                improved_total = improved_price * quantity if quantity > 0 else improved_price
-                return f"Okay, I can improve to {improved_discount}% for {quantity} units, totaling ${improved_total:,.0f}. This is my final offer at this volume."
+            last_msg = last_offer.get('message', '')
 
-        # If buyer is refusing
-        if refusing:
-            return f"Understood. If you reconsider, {discount_pct}% remains available for {quantity} units (${total_price:,.0f}), or we can discuss larger volumes for better pricing."
+            # Check if we already offered this quantity
+            if f"{quantity} units" in last_msg or f"For {quantity}" in last_msg:
+                # Same quantity, buyer asking for better discount
+                if wants_more_discount and not refusing:
+                    # Don't improve, stay firm
+                    return f"As stated, {last_discount}% is my best offer for {quantity} units (${total_price:,.0f}). This is firm at this volume."
 
-        # Standard offer
+                # Buyer is refusing the offer
+                if refusing:
+                    return f"Understood. The best I can do for {quantity} units is {last_discount}% (${total_price:,.0f}). For better pricing, consider ordering {quantity + 25}+ units."
+
+        # Standard offer (no prior offer for this quantity)
         if quantity > 0:
-            return f"For {quantity} units, I can offer {discount_pct}% off, bringing the unit price to ${discounted_price:,.0f} and total to ${total_price:,.0f}. Let me know if this works for you."
+            return f"For {quantity} units, I can offer {discount_pct}% off, bringing the unit price to ${discounted_price:,.0f} and total to ${total_price:,.0f}."
         else:
-            return f"I can offer {discount_pct}% discount for volume purchases. Just let me know your quantity and we'll finalize the terms."
+            return f"I can offer discounts based on volume. What quantity are you interested in?"
 
     def _build_opening_prompt(self, selected_item: Dict, request: Dict) -> str:
         """Build the opening negotiation prompt."""
