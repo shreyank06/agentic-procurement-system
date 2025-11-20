@@ -63,8 +63,8 @@ class ProcurementRequest(BaseModel):
     )
     top_k: int = Field(3, description="Number of top candidates to return")
     investigate: bool = Field(False, description="Enable tool investigation")
-    llm_provider: str = Field("mock", description="LLM provider (mock or openai)")
-    api_key: Optional[str] = Field(None, description="API key for LLM provider (required for OpenAI)")
+    llm_provider: str = Field("openai", description="LLM provider (openai only)")
+    api_key: Optional[str] = Field(None, description="API key for OpenAI (uses server config if not provided)")
 
     class Config:
         schema_extra = {
@@ -76,7 +76,7 @@ class ProcurementRequest(BaseModel):
                 "weights": {"price": 0.4, "lead_time": 0.3, "reliability": 0.3},
                 "top_k": 3,
                 "investigate": False,
-                "llm_provider": "mock",
+                "llm_provider": "openai",
                 "api_key": None
             }
         }
@@ -92,8 +92,8 @@ class AnalysisRequest(BaseModel):
     """Request model for initial analysis endpoints (cost optimization and negotiation start)."""
     selected_item: Dict = Field(..., description="Selected item context")
     request: Dict = Field(..., description="Original procurement request")
-    llm_provider: str = Field("mock", description="LLM provider (mock or openai)")
-    api_key: Optional[str] = Field(None, description="API key for LLM provider")
+    llm_provider: str = Field("openai", description="LLM provider (openai only)")
+    api_key: Optional[str] = Field(None, description="API key for OpenAI (uses server config if not provided)")
 
 
 class ChatRequest(BaseModel):
@@ -102,8 +102,8 @@ class ChatRequest(BaseModel):
     conversation: List[Dict] = Field(default_factory=list, description="Conversation history")
     selected_item: Dict = Field(..., description="Selected item context")
     request: Dict = Field(..., description="Original procurement request")
-    llm_provider: str = Field("mock", description="LLM provider (mock or openai)")
-    api_key: Optional[str] = Field(None, description="API key for LLM provider")
+    llm_provider: str = Field("openai", description="LLM provider (openai only)")
+    api_key: Optional[str] = Field(None, description="API key for OpenAI (uses server config if not provided)")
 
 
 # ============================================================================
@@ -233,21 +233,15 @@ async def run_procurement(request: ProcurementRequest):
             "weights": request.weights or {"price": 0.4, "lead_time": 0.3, "reliability": 0.3}
         }
 
-        # Handle API key for OpenAI provider
+        # Get OpenAI API key
         import os
-        import sys
-        api_key_to_use = None
+        api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
 
-        if request.llm_provider.lower() == "openai":
-            # Use provided API key or fall back to environment variable
-            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
-
-            if not api_key_to_use:
-                all_env_keys = sorted(list(os.environ.keys()))
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"OpenAI API key required. Total env vars: {len(all_env_keys)}, OPENAI vars: {[k for k in all_env_keys if 'OPENAI' in k.upper()]}"
-                )
+        if not api_key_to_use:
+            raise HTTPException(
+                status_code=400,
+                detail="OpenAI API key required. Set OPENAI_API_KEY environment variable or provide api_key in request"
+            )
 
         # Run procurement
         result = plan_procurement(
@@ -281,19 +275,19 @@ async def start_negotiation(request: AnalysisRequest):
     Returns vendor's opening position.
     """
     try:
-        # Validate LLM provider and API key
-        if request.llm_provider.lower() == "openai":
-            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
-            if not api_key_to_use:
-                raise HTTPException(
-                    status_code=400,
-                    detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
-                )
+        # Get OpenAI API key
+        import os
+        api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
+        if not api_key_to_use:
+            raise HTTPException(
+                status_code=400,
+                detail="OpenAI API key required. Set OPENAI_API_KEY environment variable or provide api_key in request"
+            )
 
         # Initialize agent with LLM provider, API key, and catalog for semantic search
         agent = NegotiationAgent(
-            llm_provider=request.llm_provider,
-            api_key=request.api_key,
+            llm_provider="openai",
+            api_key=api_key_to_use,
             catalog=catalog
         )
 
@@ -301,7 +295,7 @@ async def start_negotiation(request: AnalysisRequest):
         if agent.llm is None:
             raise HTTPException(
                 status_code=400,
-                detail="Failed to initialize LLM provider. Please check API key."
+                detail="Failed to initialize OpenAI. Please check API key."
             )
 
         # Start negotiation
@@ -330,19 +324,18 @@ async def negotiate_chat(request: ChatRequest):
     User can make offers and negotiate terms with the vendor.
     """
     try:
-        # Validate LLM provider and API key
-        if request.llm_provider.lower() == "openai":
-            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
-            if not api_key_to_use:
-                raise HTTPException(
-                    status_code=400,
-                    detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
-                )
+        # Get OpenAI API key
+        api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
+        if not api_key_to_use:
+            raise HTTPException(
+                status_code=400,
+                detail="OpenAI API key required. Set OPENAI_API_KEY environment variable or provide api_key in request"
+            )
 
         # Initialize agent with catalog for semantic search
         agent = NegotiationAgent(
-            llm_provider=request.llm_provider,
-            api_key=request.api_key,
+            llm_provider="openai",
+            api_key=api_key_to_use,
             catalog=catalog
         )
 
@@ -350,7 +343,7 @@ async def negotiate_chat(request: ChatRequest):
         if agent.llm is None:
             raise HTTPException(
                 status_code=400,
-                detail="Failed to initialize LLM provider. Please check API key."
+                detail="Failed to initialize OpenAI. Please check API key."
             )
 
         # Set context from conversation
@@ -379,19 +372,18 @@ async def start_cost_optimization(request: AnalysisRequest):
     Returns initial cost analysis and savings recommendations.
     """
     try:
-        # Validate LLM provider and API key
-        if request.llm_provider.lower() == "openai":
-            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
-            if not api_key_to_use:
-                raise HTTPException(
-                    status_code=400,
-                    detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
-                )
+        # Get OpenAI API key
+        api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
+        if not api_key_to_use:
+            raise HTTPException(
+                status_code=400,
+                detail="OpenAI API key required. Set OPENAI_API_KEY environment variable or provide api_key in request"
+            )
 
         # Initialize agent with LLM provider, API key, and catalog for semantic search
         agent = CostOptimizationAgent(
-            llm_provider=request.llm_provider,
-            api_key=request.api_key,
+            llm_provider="openai",
+            api_key=api_key_to_use,
             catalog=catalog
         )
 
@@ -399,7 +391,7 @@ async def start_cost_optimization(request: AnalysisRequest):
         if agent.llm is None:
             raise HTTPException(
                 status_code=400,
-                detail="Failed to initialize LLM provider. Please check API key."
+                detail="Failed to initialize OpenAI. Please check API key."
             )
 
         # Get initial analysis
@@ -428,19 +420,18 @@ async def cost_optimize_chat(request: ChatRequest):
     User can ask specific questions about cost optimization strategies.
     """
     try:
-        # Validate LLM provider and API key
-        if request.llm_provider.lower() == "openai":
-            api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
-            if not api_key_to_use:
-                raise HTTPException(
-                    status_code=400,
-                    detail="OpenAI API key required. Please provide api_key or set OPENAI_API_KEY environment variable"
-                )
+        # Get OpenAI API key
+        api_key_to_use = request.api_key or os.getenv("OPENAI_API_KEY")
+        if not api_key_to_use:
+            raise HTTPException(
+                status_code=400,
+                detail="OpenAI API key required. Set OPENAI_API_KEY environment variable or provide api_key in request"
+            )
 
         # Initialize agent with catalog for semantic search
         agent = CostOptimizationAgent(
-            llm_provider=request.llm_provider,
-            api_key=request.api_key,
+            llm_provider="openai",
+            api_key=api_key_to_use,
             catalog=catalog
         )
 
@@ -448,7 +439,7 @@ async def cost_optimize_chat(request: ChatRequest):
         if agent.llm is None:
             raise HTTPException(
                 status_code=400,
-                detail="Failed to initialize LLM provider. Please check API key."
+                detail="Failed to initialize OpenAI. Please check API key."
             )
 
         # Get agent response with full context

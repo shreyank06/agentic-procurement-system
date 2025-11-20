@@ -15,7 +15,7 @@ function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
     top_k: 3,
     investigate: false,
     negotiate: false,
-    llm_provider: 'mock',
+    llm_provider: 'openai',
     api_key: ''
   })
 
@@ -86,7 +86,7 @@ function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
       top_k: 3,
       investigate: false,
       negotiate: false,
-      llm_provider: 'mock',
+      llm_provider: 'openai',
       api_key: ''
     })
     onReset()
@@ -272,21 +272,13 @@ function RequestForm({ components, vendors, onSubmit, onReset, loading }) {
                 </div>
               </div>
 
-              {/* LLM Provider */}
+              {/* LLM Provider - OpenAI Only */}
               <div>
-                <label className="label text-sm">LLM Provider</label>
-                <select
-                  name="llm_provider"
-                  value={formData.llm_provider}
-                  onChange={handleChange}
-                  className="input-field text-sm"
-                >
-                  <option value="mock">Mock LLM (Offline)</option>
-                  <option value="openai">OpenAI</option>
-                </select>
-                {formData.llm_provider === 'openai' && (
-                  <p className="text-xs text-blue-600 mt-2">Using OpenAI API from server config</p>
-                )}
+                <label className="label text-sm">AI Provider</label>
+                <div className="bg-gray-50 border border-gray-200 rounded px-4 py-2 text-sm text-gray-700">
+                  OpenAI API
+                </div>
+                <p className="text-xs text-blue-600 mt-2">Requires OPENAI_API_KEY environment variable</p>
               </div>
             </div>
           )}
