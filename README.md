@@ -1,44 +1,95 @@
 # Agentic Procurement System
 
-An intelligent Python-based procurement agent that automates hardware component selection for mission-critical systems (aerospace, satellite missions, etc.). The system uses agentic orchestration, deterministic tools, and LLM-based justification to recommend optimal components from vendor catalogs.
+An intelligent hardware procurement agent that automates component selection for mission-critical systems (aerospace, satellite missions, etc.). Built with a modern web interface, this system uses agentic orchestration, LLM-powered analysis, and interactive vendor negotiation to recommend and negotiate optimal components from vendor catalogs.
+
+## 🎯 What It Does
+
+The **Agentic Procurement System** helps procurement teams make better hardware decisions faster:
+
+1. **Smart Component Selection** - Automatically searches and ranks components based on specifications, price, delivery time, and reliability
+2. **Interactive Vendor Negotiation** - Chat with vendors (LLM-powered) to negotiate prices and delivery terms, with order confirmation and receipts
+3. **Cost Analysis** - Analyze selected components for cost optimization opportunities and identify cheaper alternatives
+4. **Detailed Justifications** - Get AI-powered explanations for why each component was chosen
+5. **Complete Audit Trail** - Full execution traces showing exactly how decisions were made
+6. **Performance Metrics** - Track step-by-step timing and resource usage
 
 ## Overview
 
 This system implements a sophisticated procurement decision pipeline that:
-- Searches and filters hardware components based on specifications
+- Searches and filters hardware components based on specifications and technical requirements
 - Scores candidates using weighted multi-criteria optimization (price, lead time, reliability)
 - Optionally investigates candidates using deterministic research tools
-- Generates natural language justifications for selections
+- Generates natural language justifications for selections using LLMs
 - Provides detailed execution traces and performance metrics
-- Supports optional multi-agent negotiation simulation
+- Supports interactive multi-agent vendor negotiation with order confirmation
+- Offers cost optimization analysis with savings recommendations
 
 ## Key Features
+
+### 🎨 Modern Web Interface
+- **Interactive Dashboard** - Beautiful, intuitive UI for procurement decisions
+- **Live Chat Negotiation** - Real-time vendor negotiation with LLM-powered responses
+- **Order Receipts** - Professional order confirmations with all agreed terms
+- **Visual Analytics** - Cost analysis charts and savings recommendations
+- **Step-by-Step Guidance** - Welcome screen, step indicators, and guided workflow
 
 ### Core Capabilities
 - **Intelligent Catalog Search**: Filter components by type and technical specifications
 - **Multi-Criteria Scoring**: Weighted scoring system balancing cost, delivery time, and reliability
 - **Tool Integration**: Deterministic price history and vendor availability analysis
-- **LLM Justification**: Pluggable LLM adapter for natural language explanations
-- **Execution Tracing**: Complete audit trail of decision-making process
+- **LLM Justification**: OpenAI-powered natural language explanations (with mock fallback)
+- **Execution Tracing**: Complete audit trail of decision-making process with timing
 
 ### Advanced Features
-- **LangGraph Integration**: Optional graph-based workflow orchestration with fallback
-- **Multi-Agent Negotiation**: Simulated procurement agent/officer dialogue
+- **Session-Based Negotiation**: Persistent agent state across chat messages for seamless conversations
+- **Multi-Agent Negotiation**: Interactive vendor negotiation with confirmation workflow
 - **Performance Metrics**: Step-by-step latency tracking and observability
 - **Vendor Constraints**: Dynamic filtering based on vendor preferences
-- **CLI Interface**: Full-featured command-line tool for interactive use
+- **Cost Optimization**: AI-powered analysis for cost-saving opportunities
+- **Semantic Search**: Find similar products using embeddings (optional with OpenAI)
+- **CLI Interface**: Full-featured command-line tool for scripting and automation
 
 ## Architecture
 
-The system is organized into modular components:
+The system is organized into a clean, modular architecture:
 
 ```
-catalog.py          # Catalog management and search
-procurement.py      # Core agent orchestration and scoring
-llm_adapter.py      # Pluggable LLM interface (Mock + OpenAI)
-extension_endpoint.py # Vendor constraint filtering
-cli.py              # Command-line interface
-tests/              # Comprehensive test suite
+hardware-procurement-agent-wpvuer/
+├── backend/                    # Python backend (FastAPI)
+│   ├── core/                   # Core business logic
+│   │   ├── catalog.py          # Catalog management and search
+│   │   ├── procurement.py      # Agent orchestration and scoring
+│   │   ├── llm_adapter.py      # LLM interface (OpenAI + Mock)
+│   │   └── embeddings.py       # Semantic search embeddings
+│   ├── services/               # Service abstractions
+│   │   ├── llm_service.py      # LLM service layer
+│   │   └── catalog_service.py  # Catalog service layer
+│   ├── agents/                 # Intelligent agents
+│   │   ├── base_agent.py       # Base agent class
+│   │   ├── negotiation_agent.py # Vendor negotiation agent
+│   │   └── cost_optimization_agent.py # Cost analysis agent
+│   ├── api.py                  # FastAPI application and endpoints
+│   ├── requirements.txt        # Python dependencies
+│   └── __init__.py
+├── frontend/                   # React/Vite web application
+│   ├── src/
+│   │   ├── components/         # React components
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── package.json
+│   ├── vite.config.js
+│   └── Dockerfile
+├── tests/                      # Comprehensive test suite
+│   ├── test_catalog.py
+│   ├── test_procurement.py
+│   ├── test_llm_adapter.py
+│   └── test_bonus_features.py
+├── cli.py                      # Command-line interface
+├── extension_endpoint.py       # Vendor constraint filtering
+├── catalog.json                # Component catalog data
+├── requirements.txt
+├── docker-compose.yml          # Docker orchestration
+└── README.md
 ```
 
 ### Agent Workflow
@@ -50,76 +101,158 @@ tests/              # Comprehensive test suite
 5. **Justification**: Generate LLM-powered explanation
 6. **Negotiation** (optional): Simulate multi-agent approval process
 
-## Installation
+## Installation & Deployment
 
-### Requirements
-- Python 3.8+
-- Dependencies: `pytest` (for testing)
+### Prerequisites
+- **Python** 3.8+ (for backend)
+- **Node.js** 14+ (for frontend)
+- **Docker & Docker Compose** (optional, for containerized deployment)
+- **OpenAI API Key** (optional, for real LLM responses; system works with mock LLM by default)
 
-### Setup
+### Option 1: Quick Start with Docker (Recommended)
 
 ```bash
 # Clone the repository
 git clone https://github.com/shreyank06/agentic-procurement-system.git
 cd agentic-procurement-system
 
-# Install dependencies
+# Set OpenAI API key (optional, for real LLM)
+export OPENAI_API_KEY="your-api-key-here"
+
+# Start everything with Docker Compose
+docker-compose up --build
+
+# Access the application
+# Web UI: http://localhost:3000
+# API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+### Option 2: Manual Setup (Local Development)
+
+#### Backend Setup
+```bash
+# Install Python dependencies
 pip install -r requirements.txt
 
-# For development/testing
+# Set OpenAI API key (optional)
+export OPENAI_API_KEY="your-api-key-here"
+
+# Start FastAPI server
+cd backend
+python -m uvicorn api:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Frontend Setup
+```bash
+# In a new terminal, install frontend dependencies
+cd frontend
+npm install
+
+# Start Vite development server
+npm run dev
+
+# Access at http://localhost:3000
+```
+
+### Option 3: Using the Startup Script
+```bash
+# Simple one-command startup
+chmod +x start-webapp.sh
+./start-webapp.sh
+
+# This starts both backend (port 8000) and frontend (port 3000)
+```
+
+### Development Setup
+
+For development and testing:
+```bash
+# Install development dependencies
 pip install -r requirements-dev.txt
+
+# Run tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_procurement.py
 ```
 
 ## Usage
 
-### Web Application (NEW!)
+### 🌐 Web Application (Interactive UI)
 
-The system now includes a modern web interface built with React and FastAPI.
+Modern, interactive web interface for procurement decisions with real-time vendor negotiation.
 
-**Quick Start:**
-```bash
-# Using Docker Compose (recommended)
-docker-compose up --build
+**Start the application** (choose one method above in Installation section)
 
-# Or using the startup script
-./start-webapp.sh
+**Workflow:**
+1. **Welcome Screen** - Start with a brief introduction and step guidance
+2. **Procurement Request** - Enter component type, specifications, budget, and delivery requirements
+3. **Component Selection** - View ranked candidates with scores and details
+4. **Vendor Negotiation** - Chat with vendors to negotiate prices and delivery terms
+5. **Order Confirmation** - Review and confirm order with professional receipt
+6. **Cost Analysis** - Explore cost optimization opportunities and alternatives
 
-# Or manually
-# Terminal 1 - Backend
-cd backend && python api.py
+**Key Features:**
+- Real-time LLM-powered vendor responses
+- Professional order receipts with all confirmed terms
+- Persistent chat state across messages
+- Cost analysis with savings recommendations
+- Step-by-step guidance throughout the process
+- Mobile-responsive design
 
-# Terminal 2 - Frontend
-cd frontend && npm install && npm run dev
-```
+**Access Points:**
+- **Web UI**: http://localhost:3000 - Interactive procurement dashboard
+- **Backend API**: http://localhost:8000 - RESTful API endpoints
+- **API Documentation**: http://localhost:8000/docs - Interactive Swagger/OpenAPI docs
 
-**Access:**
-- **Web UI**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+For detailed web app features, see [WEB_APP_README.md](./WEB_APP_README.md)
 
-See [WEB_APP_README.md](./WEB_APP_README.md) for detailed web app documentation.
+### 💻 Command Line Interface
 
-### Command Line Interface
+Perfect for automation, scripting, and integration into other systems.
 
-Basic usage:
+**Basic usage:**
 ```bash
 python cli.py request.json
 ```
 
-With investigation and negotiation:
+**With investigation, negotiation, and metrics:**
 ```bash
 python cli.py request.json --investigate --negotiate --metrics
 ```
 
-Full options:
+**Full options:**
 ```bash
 python cli.py <request_file.json> \
-  [--investigate]              # Enable tool investigation
+  [--investigate]              # Enable tool investigation (price history, availability)
   [--top-k N]                  # Return top N candidates (default: 3)
-  [--negotiate]                # Run multi-agent negotiation
-  [--metrics]                  # Show performance metrics
-  [--constraints-file FILE]    # Apply vendor constraints
-  [--llm-provider PROVIDER]    # LLM provider (mock/openai)
+  [--negotiate]                # Run multi-agent negotiation simulation
+  [--metrics]                  # Show performance metrics and timings
+  [--constraints-file FILE]    # Apply vendor constraints from JSON file
+  [--llm-provider PROVIDER]    # LLM provider: mock (default) or openai
+```
+
+**Examples:**
+```bash
+# Simple selection with explanation
+python cli.py request.json
+
+# Detailed analysis with investigation and metrics
+python cli.py request.json --investigate --metrics
+
+# Full workflow with negotiation
+python cli.py request.json --investigate --negotiate --metrics
+
+# With custom constraints
+python cli.py request.json --constraints-file constraints.json
+
+# Using OpenAI LLM (requires OPENAI_API_KEY)
+OPENAI_API_KEY="sk-..." python cli.py request.json --llm-provider openai
 ```
 
 ### Request Format
@@ -139,28 +272,49 @@ Example `request.json`:
 }
 ```
 
-### Python API
+### 🐍 Python API
+
+Integrate procurement logic directly into your Python applications:
 
 ```python
-from procurement import plan_procurement
+from backend.core.procurement import plan_procurement
 
 request = {
     "component": "solar_panel",
     "spec_filters": {"power_w": 140},
     "max_cost": 6000,
-    "latest_delivery_days": 30
+    "latest_delivery_days": 30,
+    "weights": {
+        "price": 0.4,
+        "lead_time": 0.3,
+        "reliability": 0.3
+    }
 }
 
+# Run procurement with investigation
 result = plan_procurement(
     request,
     top_k=3,
     investigate=True,
-    llm_provider="mock"
+    llm_provider="openai",  # or "mock" for offline use
+    api_key="your-openai-key"
 )
 
+# Access results
 print(f"Selected: {result['selected']['id']}")
 print(f"Justification: {result['justification']}")
+print(f"Total candidates: {result['metrics']['total_candidates']}")
+print(f"Execution time: {result['metrics']['total_latency']:.2f}s")
+
+# View full decision trace
+for step in result['trace']:
+    print(f"  - {step['step']}: {step.get('status', step.get('result', ''))}")
 ```
+
+**API Functions:**
+- `plan_procurement()` - Main procurement decision function
+- `negotiate_procurement()` - Run vendor negotiation
+- `run_flow()` - Execute LangGraph workflow (if installed)
 
 ### LangGraph Workflow
 
@@ -336,25 +490,78 @@ python cli.py request.json --metrics
 
 Shows step latencies, tool call counts, and total execution time.
 
+## Environment Variables
+
+Configure the system using environment variables:
+
+```bash
+# LLM Configuration
+export OPENAI_API_KEY="sk-..."              # OpenAI API key (required for real LLM)
+
+# Embeddings Configuration
+export ENABLE_EMBEDDINGS="true"             # Enable semantic search (default: true)
+
+# Server Configuration
+export HOST="0.0.0.0"                       # Server host
+export PORT="8000"                          # Server port
+export ENVIRONMENT="production"             # Environment (development/production)
+```
+
+**Frontend Environment Variables** (in `.env` file):
+```
+VITE_API_URL=http://localhost:8000
+```
+
 ## Project Structure
 
+Complete directory layout with descriptions:
+
 ```
-.
-├── catalog.py              # Catalog management
-├── catalog.json            # Component catalog data
-├── procurement.py          # Agent orchestration
-├── llm_adapter.py          # LLM interface
-├── extension_endpoint.py   # Vendor constraints
-├── cli.py                  # CLI interface
-├── tests/
-│   ├── test_catalog.py
-│   ├── test_procurement.py
-│   ├── test_llm_adapter.py
-│   └── test_bonus_features.py
-├── requirements.txt
-├── requirements-dev.txt
-├── EVALUATION.md          # Implementation notes
-└── README.md
+hardware-procurement-agent-wpvuer/
+├── backend/                           # FastAPI backend application
+│   ├── core/                          # Core business logic modules
+│   │   ├── catalog.py                 # Hardware catalog management
+│   │   ├── procurement.py             # Agent orchestration & scoring
+│   │   ├── llm_adapter.py             # LLM interface (OpenAI + Mock)
+│   │   └── embeddings.py              # Semantic search embeddings
+│   ├── services/                      # Service layer abstractions
+│   │   ├── llm_service.py
+│   │   └── catalog_service.py
+│   ├── agents/                        # Intelligent agents
+│   │   ├── base_agent.py              # Base class for all agents
+│   │   ├── negotiation_agent.py       # Vendor negotiation agent
+│   │   └── cost_optimization_agent.py # Cost analysis agent
+│   ├── api.py                         # FastAPI app and endpoints
+│   ├── requirements.txt               # Python dependencies
+│   └── __init__.py
+├── frontend/                          # React/Vite web application
+│   ├── src/
+│   │   ├── components/                # React UI components
+│   │   ├── App.jsx                    # Main app component
+│   │   └── main.jsx                   # Entry point
+│   ├── public/                        # Static assets
+│   ├── package.json                   # NPM dependencies
+│   ├── vite.config.js                 # Vite bundler config
+│   ├── tailwind.config.js             # Tailwind CSS config
+│   ├── Dockerfile                     # Frontend Docker image
+│   └── .env.example                   # Environment template
+├── tests/                             # Comprehensive test suite
+│   ├── test_catalog.py                # Catalog tests
+│   ├── test_procurement.py            # Procurement logic tests
+│   ├── test_llm_adapter.py            # LLM adapter tests
+│   └── test_bonus_features.py         # Advanced feature tests
+├── cli.py                             # Command-line interface
+├── extension_endpoint.py              # Vendor constraint filtering
+├── catalog.json                       # Component catalog data (JSON)
+├── request.json                       # Sample procurement request
+├── requirements.txt                   # Root Python dependencies
+├── requirements-dev.txt               # Development dependencies
+├── docker-compose.yml                 # Docker orchestration
+├── Dockerfile.backend                 # Backend Docker image
+├── start-webapp.sh                    # Quick start script
+├── EVALUATION.md                      # Implementation notes
+├── WEB_APP_README.md                  # Web app documentation
+└── README.md                          # This file
 ```
 
 ## Design Principles
