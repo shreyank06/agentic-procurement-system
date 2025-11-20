@@ -134,6 +134,9 @@ class NegotiationAgent(BaseAgent):
         # Generate response using LLM
         response = self.generate_response(prompt, max_tokens=200)
 
+        # Extract negotiated price from vendor response
+        self._extract_negotiated_terms(response)
+
         # Add order confirmation request at the end of vendor response
         confirmation_request = self._build_confirmation_request()
         final_response = f"{response}\n\n{confirmation_request}"
@@ -207,6 +210,35 @@ Simply state the price, what makes this a good product, and ONE condition for be
 
         return prompt
 
+    def _extract_negotiated_terms(self, vendor_response: str) -> None:
+        """Extract negotiated price and lead time from vendor's response message.
+
+        Args:
+            vendor_response: The vendor's response message
+        """
+        import re
+
+        # Extract price (e.g., "$5000 per unit", "$4800/unit", "price of $4900")
+        price_match = re.search(r'\$(\d+(?:,?\d{3})*(?:\.\d+)?)\s*(?:per unit|/unit)?', vendor_response, re.IGNORECASE)
+        if price_match:
+            price_str = price_match.group(1).replace(',', '')
+            try:
+                price = float(price_str)
+                if price > 0 and price < 100000:  # Sanity check
+                    self.negotiation_state["final_price"] = price
+            except (ValueError, IndexError):
+                pass
+
+        # Extract lead time (e.g., "14 days", "10-day", "within 5 days")
+        lead_time_match = re.search(r'(\d+)\s*(?:day|days)?\s*(?:delivery|lead time)?', vendor_response, re.IGNORECASE)
+        if lead_time_match:
+            try:
+                lead_time = int(lead_time_match.group(1))
+                if lead_time > 0 and lead_time < 365:  # Sanity check
+                    self.negotiation_state["final_lead_time"] = lead_time
+            except (ValueError, IndexError):
+                pass
+
     def _build_negotiation_context(self, conversation: List[Dict]) -> str:
         """Build context from negotiation history - include full conversation for consistency."""
         context_lines = []
@@ -224,8 +256,9 @@ Simply state the price, what makes this a good product, and ONE condition for be
             return "Would you like to confirm this order?"
 
         item = self.selected_item
-        price = item.get('price', 'N/A')
-        lead_time = item.get('lead_time_days', 'N/A')
+        # Use negotiated price if available, otherwise use original price
+        price = self.negotiation_state.get("final_price") or item.get('price', 'N/A')
+        lead_time = self.negotiation_state.get("final_lead_time") or item.get('lead_time_days', 'N/A')
         item_id = item.get('id', 'N/A')
 
         confirmation_text = f"""
