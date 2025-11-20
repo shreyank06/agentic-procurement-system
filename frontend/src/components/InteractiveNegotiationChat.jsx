@@ -102,36 +102,40 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
   }
 
   return (
-    <div className="card h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+    <div className="card h-full flex flex-col bg-gradient-to-b from-white to-gray-50">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-blue-200">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Vendor Negotiation</h2>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <span>🤝</span> Vendor Negotiation
+          </h2>
           <p className="text-sm text-gray-600 mt-1">
-            Negotiating with <span className="font-semibold">{selected.vendor}</span> for {selected.id}
+            Negotiate terms with <span className="font-semibold">{selected.vendor}</span>
           </p>
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+          className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+          title="Close"
         >
           ✕
         </button>
       </div>
 
       {/* Item Summary */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-6 border border-blue-200">
-        <div className="grid grid-cols-3 gap-4 text-sm">
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg p-4 mb-6 text-white shadow-lg">
+        <p className="text-xs font-semibold uppercase text-blue-100 mb-3">{selected.id} • {selected.vendor}</p>
+        <div className="grid grid-cols-3 gap-6 text-sm">
           <div>
-            <p className="text-blue-700 font-semibold">Current Price</p>
-            <p className="text-lg font-bold text-blue-900">${selected.price}</p>
+            <p className="text-blue-100 text-xs uppercase font-semibold">Price</p>
+            <p className="text-2xl font-bold mt-1">${selected.price.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-blue-700 font-semibold">Lead Time</p>
-            <p className="text-lg font-bold text-blue-900">{selected.lead_time_days} days</p>
+            <p className="text-blue-100 text-xs uppercase font-semibold">Lead Time</p>
+            <p className="text-2xl font-bold mt-1">{selected.lead_time_days}d</p>
           </div>
           <div>
-            <p className="text-blue-700 font-semibold">Reliability</p>
-            <p className="text-lg font-bold text-blue-900">{(selected.reliability * 100).toFixed(1)}%</p>
+            <p className="text-blue-100 text-xs uppercase font-semibold">Reliability</p>
+            <p className="text-2xl font-bold mt-1">{(selected.reliability * 100).toFixed(0)}%</p>
           </div>
         </div>
       </div>
@@ -143,24 +147,24 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
       )}
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto mb-4 space-y-4 min-h-[300px]">
+      <div className="flex-1 overflow-y-auto mb-4 space-y-4 min-h-[300px] px-2">
         {conversation.map((msg, idx) => (
           <div
             key={idx}
             className={`flex ${msg.role === 'buyer' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
                 msg.role === 'buyer'
-                  ? 'bg-indigo-500 text-white rounded-br-none'
-                  : 'bg-amber-50 text-gray-900 border border-amber-200 rounded-bl-none'
+                  ? 'bg-blue-600 text-white rounded-br-none'
+                  : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
               }`}
             >
-              <p className={`text-xs font-semibold mb-1 ${msg.role === 'buyer' ? 'text-indigo-100' : 'text-amber-700'}`}>
+              <p className={`text-xs font-semibold mb-2 uppercase opacity-70`}>
                 {msg.role === 'buyer' ? 'You' : 'Vendor'}
               </p>
               <p className="text-sm leading-relaxed">{msg.message}</p>
-              <p className={`text-xs mt-1 ${msg.role === 'buyer' ? 'text-indigo-100' : 'text-amber-600'}`}>
+              <p className={`text-xs mt-2 opacity-70`}>
                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
@@ -168,11 +172,11 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-amber-50 text-gray-900 px-4 py-3 rounded-lg rounded-bl-none border border-amber-200">
+            <div className="bg-white text-gray-900 px-4 py-3 rounded-2xl rounded-bl-none border border-gray-200">
               <div className="flex gap-2">
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
               </div>
             </div>
           </div>
@@ -188,12 +192,12 @@ export default function InteractiveNegotiationChat({ selected, request, onClose 
           onChange={(e) => setUserMessage(e.target.value)}
           placeholder="Make an offer or ask a question..."
           disabled={loading}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 bg-white"
         />
         <button
           type="submit"
           disabled={loading || !userMessage.trim()}
-          className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
         >
           Send
         </button>
